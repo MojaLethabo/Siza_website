@@ -17,7 +17,7 @@ interface User {
   DarkMode?: string;
   Role?: string;
   UserType: string;
-  DOB?: String;
+  DOB?: string;
   HomeAddress?: string;
   TrustedContacts?: String;
 }

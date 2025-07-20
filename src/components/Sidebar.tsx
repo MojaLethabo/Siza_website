@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import Image from 'next/image';
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const [userMgmtOpen, setUserMgmtOpen] = useState(false);
+  //const [userMgmtOpen, setUserMgmtOpen] = useState(false);
   const [sidebarMinimized, setSidebarMinimized] = useState(false);
 
   const toggleSidebar = () => {
@@ -18,18 +19,23 @@ export default function Sidebar() {
     <div className="sidebar" data-background-color="dark">
       <div className="sidebar-logo">
         <div className="logo-header" data-background-color="dark">
-          <Link
-            href="/home"
-            className="logo"
-            style={{ width: "150px", height: "50px" }}
-          >
-            <img
-              src="img/siza.png"
-              alt="navbar brand"
-              className="navbar-brand"
-              height={44}
-            />
-          </Link>
+         import Image from 'next/image';
+import Link from 'next/link';
+
+<Link
+  href="/home"
+  className="logo"
+  style={{ width: "150px", height: "50px" }}
+>
+  <Image
+    src="/img/siza.png" // Note: the leading "/" is important
+    alt="navbar brand"
+    className="navbar-brand"
+    width={150} // Or set to the actual image width
+    height={50} // Or set to the actual image height
+  />
+</Link>
+
 
           <div className="nav-toggle">
             <button
