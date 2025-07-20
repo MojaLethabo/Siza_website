@@ -22,7 +22,8 @@ interface CommunityMember {
 
 const CommunityMemberManagement = () => {
   const router = useRouter();
-  const { user: currentUser } = useAuth();
+  // Removed unused currentUser
+  const { user } = useAuth();
   const [members, setMembers] = useState<CommunityMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -48,7 +49,7 @@ const CommunityMemberManagement = () => {
       const data = await response.json();
       console.log("API response:", data);
 
-      let membersArray: any[] = [];
+      let membersArray: CommunityMember[] = [];
       if (data.success && Array.isArray(data.CommunityMembers)) {
         membersArray = data.CommunityMembers;
       } else if (Array.isArray(data)) {
@@ -57,7 +58,7 @@ const CommunityMemberManagement = () => {
         throw new Error("Unexpected data format from API");
       }
 
-      const formattedMembers: CommunityMember[] = membersArray.map((member: any) => ({
+      const formattedMembers: CommunityMember[] = membersArray.map((member: CommunityMember) => ({
         UserID: member.UserID,
         FullName: member.FullName,
         Username: member.Username,
@@ -165,7 +166,7 @@ const CommunityMemberManagement = () => {
             className="form-control form-control-sm"
             placeholder="Search by name, email, or role..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
           />
           {searchQuery && (
             <button
@@ -272,7 +273,7 @@ const CommunityMemberManagement = () => {
             </li>
           )}
 
-          {totalPages > 1 && (
+          {totalPages > 5 && (
             <li className={`page-item ${currentPage === totalPages ? "active" : ""}`}>
               <button className="page-link" onClick={() => setCurrentPage(totalPages)}>
                 {totalPages}
@@ -292,15 +293,6 @@ const CommunityMemberManagement = () => {
         </ul>
       </nav>
 
-      {showSleepModal && selectedMember && (
-        <SleepModal
-          member={selectedMember}
-          onClose={() => setShowSleepModal(false)}
-          onSleep={(duration) => {
-            // handleSleepUser logic
-          }}
-        />
-      )}
     </div>
   );
 };

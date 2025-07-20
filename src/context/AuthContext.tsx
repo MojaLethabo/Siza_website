@@ -19,7 +19,7 @@ interface User {
   UserType: string;
   DOB?: string;
   HomeAddress?: string;
-  TrustedContacts?: String;
+  TrustedContacts?: string;
 }
 
 interface AuthContextType {

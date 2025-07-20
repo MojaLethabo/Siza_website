@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import bcrypt from "bcrypt";
 import { useAuth } from "@/context/AuthContext";
+import Image from "next/image";
 
 interface User {
   UserID: number;
@@ -69,15 +69,14 @@ export default function SettingsClient() {
         const userData = await response.json();
         setCurrentUser(userData);
         setLoading(false);
-      } catch (err) {
+      } catch (_err) {
         setError("Failed to load user data");
-        console.error("Settings fetch error:", err);
         setLoading(false);
       }
     };
 
     fetchUserData();
-  }, []);
+  }, [router]);
 
   // Handlers
   const startEdit = (field: string) => {
@@ -111,8 +110,7 @@ export default function SettingsClient() {
       localStorage.setItem("admin", JSON.stringify(updatedUser));
       updateUser(updatedUser);
       setEditingField(null);
-    } catch (err) {
-      console.error("Full error:", err);
+    } catch (_err) {
       setError("Failed to update profile");
       setCurrentUser(currentUser);
     }
@@ -149,7 +147,7 @@ export default function SettingsClient() {
         })
       );
       updateUser({ ...currentUser, DarkMode: newDarkMode });
-    } catch (err) {
+    } catch (_err) {
       setError("Failed to update appearance settings");
       // Revert on error
       setCurrentUser(currentUser);
@@ -204,7 +202,7 @@ export default function SettingsClient() {
               })
             );
             updateUser({ ...currentUser, ProfilePhoto: base64 });
-          } catch (err) {
+          } catch (_err) {
             setPhotoError("Failed to update profile photo");
             setCurrentUser(currentUser);
           }
@@ -259,8 +257,12 @@ export default function SettingsClient() {
         setConfirmPwd("");
         setPwdSuccess(false);
       }, 1500);
-    } catch (err: any) {
-      setPwdError(err.message || "Failed to update password");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setPwdError(err.message);
+      } else {
+        setPwdError("Failed to update password");
+      }
     }
   };
 
@@ -312,37 +314,38 @@ export default function SettingsClient() {
                 <div className="mb-4 text-center">
                   <div className="position-relative d-inline-block">
                     {currentUser.ProfilePhoto ? (
-                      <img
+                      <Image
                         src={currentUser.ProfilePhoto}
                         alt="Profile"
-                        className="rounded-circle"
-                        style={{
-                          width: "120px",
-                          height: "120px",
-                          objectFit: "cover",
-                        }}
+                        width={120}
+                        height={120}
+                        style={{ borderRadius: "50%", objectFit: "cover" }}
+                        unoptimized
                       />
                     ) : (
                       <div
                         className="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center"
-                        style={{ width: "120px", height: "120px" }}
+                        style={{ width: 120, height: 120, fontSize: 40 }}
                       >
-                        <i className="fas fa-user fa-2x"></i>
+                        {currentUser.FullName.charAt(0).toUpperCase()}
                       </div>
                     )}
+
+                    {/* Edit button */}
                     <button
-                      className="btn btn-sm btn-primary position-absolute bottom-0 end-0 rounded-circle"
                       onClick={() => fileInputRef.current?.click()}
-                      style={{ width: "36px", height: "36px" }}
+                      className="btn btn-sm btn-outline-primary position-absolute bottom-0 end-0"
+                      aria-label="Change Profile Photo"
+                      style={{ borderRadius: "50%" }}
                     >
-                      <i className="fas fa-camera"></i>
+                      ✎
                     </button>
                     <input
-                      type="file"
                       ref={fileInputRef}
-                      onChange={handlePhotoChange}
+                      type="file"
                       accept="image/*"
-                      className="d-none"
+                      onChange={handlePhotoChange}
+                      hidden
                     />
                   </div>
                   {photoError && (
@@ -350,48 +353,158 @@ export default function SettingsClient() {
                   )}
                 </div>
 
-                {/* Editable Fields */}
+                {/* Editable fields */}
                 {[
-                  { field: "FullName", label: "Full Name", type: "text" },
-                  { field: "Email", label: "Email", type: "email" },
-                  { field: "Username", label: "Username", type: "text" },
-                  { field: "PhoneNumber", label: "Phone Number", type: "text" },
-                ].map(({ field, label, type }) => (
-                  <div className="mb-3" key={field}>
-                    <label className="form-label">{label}</label>
-                    <div className="input-group">
-                      <input
-                        type={type}
-                        className="form-control"
-                        value={
-                          editingField === field
-                            ? tempValue
-                            : String(currentUser[field as keyof User] || "")
-                        }
-                        readOnly={editingField !== field}
-                        onChange={(e) => setTempValue(e.target.value)}
-                      />
-                      {editingField === field ? (
-                        <button className="btn btn-success" onClick={saveField}>
+                  { label: "Full Name", field: "FullName" },
+                  { label: "Email", field: "Email" },
+                  { label: "Username", field: "Username" },
+                  { label: "Phone Number", field: "PhoneNumber" },
+                ].map(({ label, field }) => (
+                  <div
+                    className="mb-3 d-flex align-items-center justify-content-between"
+                    key={field}
+                  >
+                    <label className="mb-0 fw-bold">{label}:</label>
+
+                    {editingField === field ? (
+                      <>
+                        <input
+                          type="text"
+                          className="form-control me-2"
+                          value={tempValue}
+                          onChange={(e) => setTempValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") saveField();
+                            if (e.key === "Escape") setEditingField(null);
+                          }}
+                          autoFocus
+                        />
+                        <button
+                          onClick={saveField}
+                          className="btn btn-primary btn-sm me-1"
+                          aria-label={`Save ${label}`}
+                        >
                           Save
                         </button>
-                      ) : (
                         <button
-                          className="btn btn-outline-secondary"
-                          onClick={() => startEdit(field)}
+                          onClick={() => setEditingField(null)}
+                          className="btn btn-secondary btn-sm"
+                          aria-label={`Cancel editing ${label}`}
                         >
-                          <i className="fas fa-edit" />
+                          Cancel
                         </button>
-                      )}
-                    </div>
+                      </>
+                    ) : (
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        className="text-break flex-grow-1"
+                        onClick={() => startEdit(field)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") startEdit(field);
+                        }}
+                        aria-label={`Edit ${label}`}
+                      >
+                        {currentUser[field as keyof User] || "-"}
+                      </div>
+                    )}
                   </div>
                 ))}
-                <button
-                  className="btn btn-danger mt-3"
-                  onClick={() => setShowPwdModal(true)}
-                >
-                  Change Password
-                </button>
+
+                {/* Change Password */}
+                <div className="mt-4">
+                  <button
+                    className="btn btn-warning"
+                    onClick={() => setShowPwdModal(true)}
+                  >
+                    Change Password
+                  </button>
+                </div>
+
+                {/* Password modal */}
+                {showPwdModal && (
+                  <div
+                    className="modal d-block"
+                    tabIndex={-1}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="passwordModalTitle"
+                  >
+                    <div className="modal-dialog">
+                      <div className="modal-content">
+                        <div className="modal-header">
+                          <h5 className="modal-title" id="passwordModalTitle">
+                            Change Password
+                          </h5>
+                          <button
+                            type="button"
+                            className="btn-close"
+                            onClick={() => setShowPwdModal(false)}
+                            aria-label="Close"
+                          ></button>
+                        </div>
+                        <div className="modal-body">
+                          {pwdError && (
+                            <div className="alert alert-danger">{pwdError}</div>
+                          )}
+                          {pwdSuccess && (
+                            <div className="alert alert-success">
+                              Password updated successfully!
+                            </div>
+                          )}
+
+                          <div className="mb-3">
+                            <label className="form-label">Old Password</label>
+                            <input
+                              type="password"
+                              className="form-control"
+                              value={oldPwd}
+                              onChange={(e) => setOldPwd(e.target.value)}
+                            />
+                          </div>
+
+                          <div className="mb-3">
+                            <label className="form-label">New Password</label>
+                            <input
+                              type="password"
+                              className="form-control"
+                              value={newPwd}
+                              onChange={(e) => setNewPwd(e.target.value)}
+                            />
+                          </div>
+
+                          <div className="mb-3">
+                            <label className="form-label">
+                              Confirm New Password
+                            </label>
+                            <input
+                              type="password"
+                              className="form-control"
+                              value={confirmPwd}
+                              onChange={(e) => setConfirmPwd(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                        <div className="modal-footer">
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            onClick={() => setShowPwdModal(false)}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-primary"
+                            onClick={updatePassword}
+                          >
+                            Update Password
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -399,135 +512,37 @@ export default function SettingsClient() {
             {activeTab === "appearance" && (
               <div>
                 <h4>Appearance</h4>
-                <div className="form-check form-switch">
-                  <input
-                    className="form-check-input"
-                    type="checkbox"
-                    checked={currentUser.DarkMode === "Yes"}
-                    onChange={toggleAppearance}
-                    id="darkModeSwitch"
-                  />
-                  <label className="form-check-label" htmlFor="darkModeSwitch">
-                    Dark Mode
-                  </label>
-                </div>
+                <p>
+                  <strong>Dark Mode:</strong>{" "}
+                  {currentUser.DarkMode === "Yes" ? "Enabled" : "Disabled"}
+                </p>
+                <button
+                  className="btn btn-outline-primary"
+                  onClick={toggleAppearance}
+                >
+                  Toggle Dark Mode
+                </button>
               </div>
             )}
 
-            {/* Other tabs remain the same */}
-            {/* Notifications */}
+            {/* Notifications (empty for now) */}
             {activeTab === "notifications" && (
               <div>
                 <h4>Notifications</h4>
-                {["email", "sms", "push"].map((key) => (
-                  <div className="form-check" key={key}>
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      id={key}
-                    />
-                    <label className="form-check-label" htmlFor={key}>
-                      {key.charAt(0).toUpperCase() + key.slice(1)} Notifications
-                    </label>
-                  </div>
-                ))}
+                <p>No notification settings yet.</p>
               </div>
             )}
 
-            {/* Language */}
+            {/* Language (empty for now) */}
             {activeTab === "language" && (
               <div>
                 <h4>Language</h4>
-                <select className="form-select w-auto">
-                  <option>English</option>
-                  <option>Spanish</option>
-                  <option>French</option>
-                  <option>German</option>
-                  <option>Chinese</option>
-                </select>
+                <p>No language settings yet.</p>
               </div>
             )}
           </div>
         </div>
       </div>
-
-      {/* Change Password Modal */}
-      {showPwdModal && (
-        <div
-          className="modal show d-block"
-          tabIndex={-1}
-          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-          onClick={() => setShowPwdModal(false)}
-        >
-          <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Change Password</h5>
-                <button
-                  className="btn-close"
-                  onClick={() => setShowPwdModal(false)}
-                />
-              </div>
-              <div className="modal-body">
-                {pwdSuccess && (
-                  <div className="alert alert-success">
-                    Password updated successfully!
-                  </div>
-                )}
-                {pwdError && (
-                  <div className="alert alert-danger">{pwdError}</div>
-                )}
-                <div className="mb-3">
-                  <label className="form-label">Old Password</label>
-                  <input
-                    value={oldPwd}
-                    onChange={(e) => setOldPwd(e.target.value)}
-                    type="password"
-                    className="form-control"
-                    disabled={pwdSuccess}
-                  />
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">New Password</label>
-                  <input
-                    value={newPwd}
-                    onChange={(e) => setNewPwd(e.target.value)}
-                    type="password"
-                    className="form-control"
-                    disabled={pwdSuccess}
-                  />
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">Confirm New Password</label>
-                  <input
-                    value={confirmPwd}
-                    onChange={(e) => setConfirmPwd(e.target.value)}
-                    type="password"
-                    className="form-control"
-                    disabled={pwdSuccess}
-                  />
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setShowPwdModal(false)}
-                  disabled={pwdSuccess}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="btn btn-primary"
-                  onClick={updatePassword}
-                  disabled={pwdSuccess}
-                >
-                  Update Password
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
