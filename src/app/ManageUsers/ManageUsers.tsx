@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import SleepModal from "@/components/SleepModal";
 
 interface CommunityMember {
   UserID: number;
@@ -22,13 +21,12 @@ interface CommunityMember {
 
 const CommunityMemberManagement = () => {
   const router = useRouter();
-  // Removed unused currentUser
-  const { user } = useAuth();
+  // Removed unused user from useAuth
+  // const { user } = useAuth();
+
   const [members, setMembers] = useState<CommunityMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [showSleepModal, setShowSleepModal] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<CommunityMember | null>(null);
   const [sortBy, setSortBy] = useState<"ID" | "Name" | "Responses">("ID");
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
@@ -74,8 +72,12 @@ const CommunityMemberManagement = () => {
       }));
 
       setMembers(formattedMembers);
-    } catch (err: any) {
-      setError(err.message || "Error fetching community members");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Error fetching community members");
+      }
     } finally {
       setLoading(false);
     }
@@ -227,17 +229,7 @@ const CommunityMemberManagement = () => {
                     boxShadow: "0 0 6px rgba(0,0,0,0.1)"
                   }}
                 />
-                <button
-                  className="btn btn-sm btn-outline-danger"
-                  disabled={!member.isActive}
-                  onClick={() => {
-                    setSelectedMember(member);
-                    setShowSleepModal(true);
-                  }}
-                  title="Put member to sleep"
-                >
-                  Sleep
-                </button>
+                {/* Removed Sleep button */}
               </div>
             </div>
           ))}
@@ -292,7 +284,6 @@ const CommunityMemberManagement = () => {
           </li>
         </ul>
       </nav>
-
     </div>
   );
 };
