@@ -1,7 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+export const dynamic = "force-dynamic";
+
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Image from "next/image";
 
 interface Report {
   ReportID: number;
@@ -24,7 +27,7 @@ interface Reporter {
   ProfilePhoto: string | null;
 }
 
-export default function ReportPage() {
+function ReportContent() {
   const searchParams = useSearchParams();
   const reportId = searchParams.get("id");
 
@@ -40,7 +43,7 @@ export default function ReportPage() {
 
     async function fetchData() {
       try {
-        const res = await fetch(`http://localhost:3000/getReportWithReporter?id=${reportId}`);
+        const res = await fetch(`https://myappapi-yo3p.onrender.com/getReportWithReporter?id=${reportId}`);
         const data = await res.json();
 
         if (data.success) {
@@ -49,7 +52,7 @@ export default function ReportPage() {
         } else {
           setError(data.message || "Failed to load report.");
         }
-      } catch (err) {
+      } catch {
         setError("An error occurred while fetching the report.");
       }
     }
@@ -90,10 +93,12 @@ export default function ReportPage() {
             {report.MediaPhoto && (
               <div>
                 <p className="font-semibold mb-2">Attached Photo</p>
-                <img
+                <Image
                   src={report.MediaPhoto}
                   alt="Report Media"
                   className="rounded-lg shadow border"
+                  width={500}
+                  height={300}
                 />
               </div>
             )}
@@ -111,10 +116,12 @@ export default function ReportPage() {
           <h2 className="text-2xl font-semibold text-green-700 mb-4">Reporter Information</h2>
           <div className="flex items-center gap-5">
             {reporter.ProfilePhoto ? (
-              <img
+              <Image
                 src={reporter.ProfilePhoto}
                 alt="Profile"
-                className="w-24 h-24 rounded-full shadow border object-cover"
+                className="rounded-full shadow border object-cover"
+                width={96}
+                height={96}
               />
             ) : (
               <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center text-xl text-gray-600 shadow">
@@ -132,5 +139,13 @@ export default function ReportPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ReportPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-gray-500">Loading report...</div>}>
+      <ReportContent />
+    </Suspense>
   );
 }

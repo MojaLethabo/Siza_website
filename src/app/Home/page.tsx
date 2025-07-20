@@ -2,9 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation"; 
-import { MapContainer, TileLayer, Marker, Popup, Tooltip } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import dynamic from 'next/dynamic';
+
+// Dynamically import the MapContainer with no SSR
+const DynamicMap = dynamic(() => import('@/components/MapComponent'), {
+  ssr: false,
+  loading: () => <div className="h-96 bg-gray-100 rounded-lg flex items-center justify-center">Loading map...</div>
+});
 
 // Define TypeScript interface for a report
 interface Report {
@@ -25,46 +29,21 @@ interface Incident {
   status: string;
 }
 
-// Custom pin icons
-const redPinIcon = new L.Icon({
-  iconUrl: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
-  iconSize: [32, 32],
-  iconAnchor: [16, 32],
-  popupAnchor: [0, -32],
-  tooltipAnchor: [16, -28],
-});
-
-const greenPinIcon = new L.Icon({
-  iconUrl: "https://cdn-icons-png.flaticon.com/512/190/190411.png",
-  iconSize: [32, 32],
-  iconAnchor: [16, 32],
-  popupAnchor: [0, -32],
-  tooltipAnchor: [16, -28],
-});
-
 export default function HomePage() {
   const router = useRouter();
-  const [isMounted, setIsMounted] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const [incidents, setIncidents] = useState<Incident[]>([]);
 
-  // Reload logic to prevent flicker - runs only on client
+  // Simple client-side hydration check
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const hasReloaded = sessionStorage.getItem("reloaded");
-      if (!hasReloaded) {
-        sessionStorage.setItem("reloaded", "true");
-        location.replace(location.href); // smoother than reload()
-      } else {
-        setIsMounted(true);
-      }
-    }
+    setIsClient(true);
   }, []);
 
-  // Fetch reports after component is mounted post-reload
+  // Fetch reports after component is mounted
   useEffect(() => {
     async function fetchReports() {
       try {
-        const res = await fetch("http://localhost:3000/getReports");
+        const res = await fetch("https://myappapi-yo3p.onrender.com/getReports");
         const data: { success: boolean; Reports: Report[] } = await res.json();
         console.log("API response:", data.Reports[0]);
 
@@ -89,13 +68,10 @@ export default function HomePage() {
       }
     }
 
-    if (isMounted) {
+    if (isClient) {
       fetchReports();
     }
-  }, [isMounted]);
-
-  // Prevent rendering until reload logic completes
-  if (!isMounted) return null;
+  }, [isClient]);
 
   return (
     <div className="min-h-screen bg-gradient-to-tr from-green-50 via-blue-50 to-white p-6 font-sans text-gray-800">
@@ -177,41 +153,7 @@ export default function HomePage() {
         </div>
 
         <div style={{ height: "450px", borderRadius: "12px", overflow: "hidden" }}>
-          <MapContainer
-            center={[-26.140, 28.0125]}
-            zoom={14}
-            scrollWheelZoom={true}
-            style={{ height: "100%", width: "100%" }}
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://carto.com/">CARTO</a> &amp; <a href="https://openstreetmap.org">OpenStreetMap</a>'
-              url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-            />
-
-            {incidents.map(({ id, lat, lng, description, status }) => (
-              <Marker
-                key={id}
-                position={[lat, lng]}
-                icon={status === "Completed" ? greenPinIcon : redPinIcon}
-              >
-                <Tooltip direction="top" offset={[0, -30]} opacity={1} permanent>
-                  Incident #{id}
-                </Tooltip>
-                <Popup>
-                  <strong className="block mb-1 text-red-600">Emergency:</strong>
-                  <p className="mb-2">{description}</p>
-                  <button
-                    onClick={() => {
-                        router.push(`/Report?id=${id}`);
-                    }}
-                    className="text-red-600 hover:text-red-800 underline font-semibold"
-                  >
-                    View Report
-                  </button>
-                </Popup>
-              </Marker>
-            ))}
-          </MapContainer>
+          {isClient && <DynamicMap incidents={incidents} router={router} />}
         </div>
       </section>
     </div>

@@ -19,7 +19,7 @@ export default function LoginPage() {
     setMessage("");
 
     try {
-      const response = await fetch("http://localhost:3000/login-admin", {
+      const response = await fetch("https://myappapi-yo3p.onrender.com/login-admin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),

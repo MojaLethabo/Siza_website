@@ -22,7 +22,7 @@ export default function RegisterPage() {
     if (password !== confirmPassword) return alert("Passwords don't match.");
 
     try {
-      const response = await fetch("http://localhost:3000/register-admin", {
+      const response = await fetch("https://myappapi-yo3p.onrender.com/register-admin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -42,7 +42,7 @@ export default function RegisterPage() {
         const data = await response.json();
         alert(data.message || "Registration failed");
       }
-    } catch (err) {
+    } catch (_) {
       alert("Network error");
     }
   };

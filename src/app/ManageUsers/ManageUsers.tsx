@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
+//import { useAuth } from "@/context/AuthContext";
 
 interface CommunityMember {
   UserID: number;
@@ -37,7 +37,7 @@ const CommunityMemberManagement = () => {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:3000/getCommunityMembers");
+      const response = await fetch("https://myappapi-yo3p.onrender.com/getCommunityMembers");
 
       if (!response.ok) {
         const errorData = await response.json();
