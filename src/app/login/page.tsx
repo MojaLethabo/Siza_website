@@ -56,6 +56,7 @@ export default function LoginPage() {
   };
 
   return (
+  <div className={styles.wrapper}>
     <div className={styles.logincontainer}>
       <form onSubmit={submit}>
         <img
@@ -102,5 +103,7 @@ export default function LoginPage() {
         </p>
       </form>
     </div>
-  );
+  </div>
+);
+
 }

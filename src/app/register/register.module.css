@@ -1,47 +1,55 @@
-body {
-      font-family: Arial, sans-serif;
-      background-color: #f5f5f5;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .registercontainer {
-      background: #ffffff;
-      padding: 40px 30px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      width: 350px;
-      text-align: center;
-    }
-    .registercontainer img {
-        width: 190; height: 170; 
-      max-width: 200px;
-      margin-bottom: 5px;
-    }
-    .registercontainer h1 {
-      font-size: 1.5rem;
-      margin-bottom: 20px;
-      color: #333;
-    }
-    .registercontainer input {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 15px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    .registercontainer button {
-      width: 100%;
-      padding: 10px;
-      background-color: #dc3545;
-      border: none;
-      color: #fff;
-      border-radius: 4px;
-      font-size: 1rem;
-      cursor: pointer;
-    }
-    .registercontainer button:hover {
-      background-color: #bd2130;
-    }
+.pageWrapper {
+  height: 100vh;
+  display: flex;
+  justify-content: center; /* center horizontally */
+  align-items: center;     /* center vertically */
+  background-color: #f5f5f5;
+  font-family: Arial, sans-serif;
+  margin: 0;
+}
+
+.registercontainer {
+  background: #ffffff;
+  padding: 40px 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  width: 350px;
+  text-align: center;
+}
+
+
+.registercontainer img {
+  width: 190px;
+  height: 170px;
+  max-width: 200px;
+  margin-bottom: 5px;
+}
+
+.registercontainer h1 {
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.registercontainer input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.registercontainer button {
+  width: 100%;
+  padding: 10px;
+  background-color: #dc3545;
+  border: none;
+  color: #fff;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.registercontainer button:hover {
+  background-color: #bd2130;
+}

@@ -56,6 +56,7 @@ export default function RegisterPage() {
   };
 
   return (
+    <div className={styles.pageWrapper}>
     <div
       className={styles.registercontainer}
       style={{ overflowY: "auto", maxHeight: "100vh" }}
@@ -179,5 +180,6 @@ export default function RegisterPage() {
         </div>
       )}
     </div>
+      </div>
   );
 }
