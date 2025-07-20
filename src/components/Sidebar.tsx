@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import Image from 'next/image';
+       
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -19,8 +20,6 @@ export default function Sidebar() {
     <div className="sidebar" data-background-color="dark">
       <div className="sidebar-logo">
         <div className="logo-header" data-background-color="dark">
-         import Image from 'next/image';
-import Link from 'next/link';
 
 <Link
   href="/home"

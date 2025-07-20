@@ -1,16 +1,19 @@
-"use client";
+ss"use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import styles from "./broadcast.module.css";
 import { useAuth } from "@/context/AuthContext";
 import { format as formatDate } from "date-fns-tz";
 
-interface Message {
+interface RawMessage {
   MessageID: number;
   SenderID: number;
   SenderName: string;
   Content: string;
   SentAt: string;
+}
+
+interface Message extends RawMessage {
   isCurrentUser: boolean;
 }
 
@@ -23,9 +26,9 @@ export default function BroadcastPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const channelId = 1; // Melville Emergency Channel
 
-  // Fetch messages from server
   const BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
-  const fetchMessages = async () => {
+
+  const fetchMessages = useCallback(async () => {
     try {
       const response = await fetch(
         `${BASE}/api/channels/${channelId}/messages`
@@ -34,13 +37,12 @@ export default function BroadcastPage() {
 
       const data = await response.json();
 
-      // Sort by SentAt in ascending order (oldest first)
       const sorted = data.messages.sort(
-        (a: any, b: any) =>
+        (a: RawMessage, b: RawMessage) =>
           new Date(a.SentAt).getTime() - new Date(b.SentAt).getTime()
       );
 
-      const formattedMessages = sorted.map((msg: any) => ({
+      const formattedMessages: Message[] = sorted.map((msg: RawMessage) => ({
         ...msg,
         SentAt: formatDate(new Date(msg.SentAt), "MMM d, h:mm a"),
         isCurrentUser: msg.SenderID === user?.UserID,
@@ -53,27 +55,22 @@ export default function BroadcastPage() {
       setLoading(false);
       console.error("Message fetch error:", err);
     }
-  };
+  }, [BASE, channelId, user]);
 
-  // Load initial messages and set up polling
   useEffect(() => {
     fetchMessages();
 
-    // Set up polling for new messages
     const interval = setInterval(fetchMessages, 5000);
     return () => clearInterval(interval);
-  }, [user]);
+  }, [fetchMessages]);
 
-  // Scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Handle sending a new message
   const sendMessage = async () => {
     if (!newMessage.trim() || !user) return;
 
-    // Generate a temporary ID out here
     const tempId = Date.now();
     const tempMessage: Message = {
       MessageID: tempId,
@@ -84,7 +81,6 @@ export default function BroadcastPage() {
       isCurrentUser: true,
     };
 
-    // Optimistic update
     setMessages((prev) => [...prev, tempMessage]);
     setNewMessage("");
 
@@ -112,13 +108,11 @@ export default function BroadcastPage() {
       );
     } catch (err) {
       console.error("Message send error:", err);
-      // Now tempId is in scope here, so you can revert safely:
       setMessages((prev) => prev.filter((m) => m.MessageID !== tempId));
       setError("Failed to send message. Please try again.");
     }
   };
 
-  // Handle key press (Enter to send)
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
