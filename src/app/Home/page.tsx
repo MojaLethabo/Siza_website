@@ -47,14 +47,16 @@ export default function HomePage() {
   const [isMounted, setIsMounted] = useState(false);
   const [incidents, setIncidents] = useState<Incident[]>([]);
 
-  // Reload logic to prevent flicker
+  // Reload logic to prevent flicker - runs only on client
   useEffect(() => {
-    const hasReloaded = sessionStorage.getItem("reloaded");
-    if (!hasReloaded) {
-      sessionStorage.setItem("reloaded", "true");
-      location.replace(location.href); // smoother than reload()
-    } else {
-      setIsMounted(true);
+    if (typeof window !== "undefined") {
+      const hasReloaded = sessionStorage.getItem("reloaded");
+      if (!hasReloaded) {
+        sessionStorage.setItem("reloaded", "true");
+        location.replace(location.href); // smoother than reload()
+      } else {
+        setIsMounted(true);
+      }
     }
   }, []);
 
@@ -201,7 +203,6 @@ export default function HomePage() {
                   <button
                     onClick={() => {
                         router.push(`/Report?id=${id}`);
-                      
                     }}
                     className="text-red-600 hover:text-red-800 underline font-semibold"
                   >
