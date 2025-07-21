@@ -43,6 +43,8 @@ export default function SettingsClient() {
   const tabs = ["account", "appearance", "notifications", "language"] as const;
   type Tab = (typeof tabs)[number];
   const [activeTab, setActiveTab] = useState<Tab>("account");
+//
+const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
 
   // Fetch user data on mount
   useEffect(() => {
@@ -59,9 +61,7 @@ export default function SettingsClient() {
         setCurrentUser(user);
 
         // Fetch fresh data from server
-        const response = await fetch(
-          `https://myappapi-yo3p.onrender.com/api/user/${user.UserID}`
-        );
+        const response = await fetch(`${BASE_URL}/api/user/${user.UserID}`);
         if (!response.ok) {
           throw new Error(`Failed to fetch user: ${response.status}`);
         }
@@ -94,7 +94,7 @@ export default function SettingsClient() {
 
       // Send update to server
       const response = await fetch(
-        `https://myappapi-yo3p.onrender.com/api/user/${currentUser.UserID}`,
+        `${BASE_URL}/api/user/${currentUser.UserID}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -126,7 +126,7 @@ export default function SettingsClient() {
       setCurrentUser({ ...currentUser, DarkMode: newDarkMode });
 
       const response = await fetch(
-        `https://myappapi-yo3p.onrender.com/api/admin/${currentUser.UserID}/darkmode`,
+        `${BASE_URL}/api/admin/${currentUser.UserID}/darkmode`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -185,7 +185,7 @@ export default function SettingsClient() {
 
             // Update in backend
             await fetch(
-              `https://myappapi-yo3p.onrender.com/api/user/${currentUser.UserID}/photo`,
+              `${BASE_URL}/api/user/${currentUser.UserID}/photo`,
               {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
@@ -235,7 +235,7 @@ export default function SettingsClient() {
 
     try {
       const response = await fetch(
-        `https://myappapi-yo3p.onrender.com/api/user/${currentUser.UserID}/password`,
+        `${BASE_URL}/api/user/${currentUser.UserID}/password`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },

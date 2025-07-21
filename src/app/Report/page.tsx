@@ -34,6 +34,7 @@ function ReportContent() {
   const [report, setReport] = useState<Report | null>(null);
   const [reporter, setReporter] = useState<Reporter | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const BASE = process.env.NEXT_PUBLIC_BACKEND_URL!;
 
   useEffect(() => {
     if (!reportId) {
@@ -43,7 +44,7 @@ function ReportContent() {
 
     async function fetchData() {
       try {
-        const res = await fetch(`https://myappapi-yo3p.onrender.com/getReportWithReporter?id=${reportId}`);
+        const res = await fetch(`${BASE}/getReportWithReporter?id=${reportId}`);
         const data = await res.json();
 
         if (data.success) {
