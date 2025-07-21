@@ -26,7 +26,8 @@ export default function BroadcastPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const channelId = 1; // Melville Emergency Channel
 
-  const BASE = "https://myappapi-yo3p.onrender.com"; // hardcoded API URL
+  const BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "https://myappapi-yo3p.onrender.com";
+
 
   const fetchMessages = useCallback(async () => {
     try {
