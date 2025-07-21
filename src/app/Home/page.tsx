@@ -100,7 +100,7 @@ async function fetchReportCount() {
 }
 async function fetchCompletedCount() {
   try {
-    const res = await fetch("https://myappapi-yo3p.onrender.com/count/completed");
+    const res = await fetch("https://myappapi-yo3p.onrender.com/reports/count/completed");
     const data = await res.json();
     if (data.success) {
       setCompletedCount(data.count);
