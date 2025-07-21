@@ -94,15 +94,19 @@ function ReportContent() {
   {report.MediaPhoto && (
     <div>
       <p className="font-semibold mb-2">Attached Photo</p>
-      <img
-        src={
-          report.MediaPhoto.startsWith("data:")
-            ? report.MediaPhoto
-            : `data:image/jpeg;base64,${report.MediaPhoto}`
-        }
-        alt="Report Media"
-        className="rounded-lg shadow border w-full max-w-[500px] h-auto"
-      />
+     <Image
+  src={
+    report.MediaPhoto.startsWith("data:")
+      ? report.MediaPhoto
+      : `data:image/jpeg;base64,${report.MediaPhoto}`
+  }
+  alt="Report Media"
+  width={500}
+  height={300}
+  unoptimized
+  className="rounded-lg shadow border w-full h-auto"
+/>
+
     </div>
   )}
 
@@ -121,6 +125,7 @@ function ReportContent() {
     </div>
   )}
 </div>
+
 
         </div>
 
