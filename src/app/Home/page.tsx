@@ -33,6 +33,9 @@ export default function HomePage() {
   const router = useRouter();
   const [isClient, setIsClient] = useState(false);
   const [incidents, setIncidents] = useState<Incident[]>([]);
+const [memberCount, setMemberCount] = useState<number | null>(null);
+const [reportCount, setReportCount] = useState<number | null>(null);
+const [completedCount, setCompletedCount] = useState<number | null>(null);
 
   // Simple client-side hydration check
   useEffect(() => {
@@ -41,7 +44,7 @@ export default function HomePage() {
 
   // Fetch reports after component is mounted
   useEffect(() => {
-    async function fetchReports() {
+async function fetchReports() {
       try {
         const res = await fetch("https://myappapi-yo3p.onrender.com/getReports");
         const data: { success: boolean; Reports: Report[] } = await res.json();
@@ -66,56 +69,102 @@ export default function HomePage() {
         console.error("Failed to fetch reports:", error);
         setIncidents([]);
       }
+}
+async function fetchCommunityMemberCount() {
+  try {
+    const res = await fetch("https://myappapi-yo3p.onrender.com/community/count");
+    const data = await res.json();
+    if (data.success) {
+      setMemberCount(data.count);
+    } else {
+      setMemberCount(0);
     }
+  } catch (error) {
+    console.error("Failed to fetch community member count:", error);
+    setMemberCount(0);
+  }
+}
+async function fetchReportCount() {
+  try {
+    const res = await fetch("https://myappapi-yo3p.onrender.com/reports/count");
+    const data = await res.json();
+    if (data.success) {
+      setReportCount(data.count);
+    } else {
+      setReportCount(0);
+    }
+  } catch (error) {
+    console.error("Failed to fetch report count:", error);
+    setReportCount(0);
+  }
+}
+async function fetchCompletedCount() {
+  try {
+    const res = await fetch("https://myappapi-yo3p.onrender.com/count/completed");
+    const data = await res.json();
+    if (data.success) {
+      setCompletedCount(data.count);
+    } else {
+      setCompletedCount(0);
+    }
+  } catch (error) {
+    console.error("Failed to fetch completed report count:", error);
+    setCompletedCount(0);
+  }
+}
 
-    if (isClient) {
-      fetchReports();
-    }
+if (isClient) {
+  fetchReports();
+  fetchCommunityMemberCount();
+  fetchReportCount();
+  fetchCompletedCount(); 
+}
   }, [isClient]);
 
   return (
     <div className="min-h-screen bg-gradient-to-tr from-green-50 via-blue-50 to-white p-6 font-sans text-gray-800">
       <header className="flex flex-col md:flex-row justify-between items-center mb-8">
         <h1 className="text-3xl font-extrabold text-blue-700 mb-4 md:mb-0">
-          Siza Community Watch Dashboard - Westdene
+          Siza Community Watch Dashboard - Melville
         </h1>
-        <div className="flex gap-3">
+        {/*<div className="flex gap-3">
           <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow transition">
             Manage Reports
           </button>
           <button className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow transition">
             Add Notice
           </button>
-        </div>
+        </div>*/}
       </header>
 
       {/* Dashboard Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-10">
         {[
           {
-            title: "Community Members",
-            count: "1,294",
-            icon: "fas fa-users",
-            color: "text-blue-600",
-          },
+    title: "Community Members",
+    count: memberCount !== null ? memberCount.toLocaleString() : "Loading...",
+    icon: "fas fa-users",
+    color: "text-blue-600",
+  },
           {
             title: "Active members",
-            count: "150",
+            count: "1",
             icon: "fas fa-user-check",
             color: "text-green-600",
           },
+           {
+    title: "Reports",
+    count: reportCount !== null ? reportCount.toLocaleString() : "Loading...",
+    icon: "fas fa-luggage-cart",
+    color: "text-yellow-600",
+  },
           {
-            title: "Reports",
-            count: "900",
-            icon: "fas fa-luggage-cart",
-            color: "text-yellow-600",
-          },
-          {
-            title: "Solved Cases",
-            count: "806",
-            icon: "far fa-check-circle",
-            color: "text-purple-600",
-          },
+  title: "Completed Report",
+  count: completedCount !== null ? completedCount.toLocaleString() : "Loading...",
+  icon: "far fa-check-circle",
+  color: "text-purple-600",
+}
+,
         ].map((card, index) => (
           <div
             key={index}

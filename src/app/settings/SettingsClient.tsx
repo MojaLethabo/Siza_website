@@ -60,7 +60,7 @@ export default function SettingsClient() {
 
         // Fetch fresh data from server
         const response = await fetch(
-          `http://localhost:3000/api/user/${user.UserID}`
+          `https://myappapi-yo3p.onrender.com/api/user/${user.UserID}`
         );
         if (!response.ok) {
           throw new Error(`Failed to fetch user: ${response.status}`);
