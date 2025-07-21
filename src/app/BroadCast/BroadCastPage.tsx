@@ -26,13 +26,13 @@ export default function BroadcastPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const channelId = 1; // Melville Emergency Channel
 
-  const BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "https://myappapi-yo3p.onrender.com";
+  //const BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "https://myappapi-yo3p.onrender.com";
 
 
   const fetchMessages = useCallback(async () => {
     try {
       const response = await fetch(
-        `${BASE}/api/channels/${channelId}/messages`
+        `https://myappapi-yo3p.onrender.com/api/channels/${channelId}/messages`
       );
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
@@ -87,7 +87,7 @@ export default function BroadcastPage() {
 
     try {
       const response = await fetch(
-        `${BASE}/api/channels/${channelId}/messages`,
+        `https://myappapi-yo3p.onrender.com/api/channels/${channelId}/messages`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

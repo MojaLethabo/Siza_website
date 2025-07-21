@@ -259,9 +259,14 @@ export default function SettingsClient() {
         setConfirmPwd("");
         setPwdSuccess(false);
       }, 1500);
-    } catch (err: any) {
-      setPwdError(err.message || "Failed to update password");
-    }
+   } catch (err: unknown) {
+  if (err instanceof Error) {
+    setPwdError(err.message || "Failed to update password");
+  } else {
+    setPwdError("Failed to update password");
+  }
+}
+
   };
 
   if (loading) {
