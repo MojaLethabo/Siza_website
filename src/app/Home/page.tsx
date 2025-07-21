@@ -46,7 +46,7 @@ const [completedCount, setCompletedCount] = useState<number | null>(null);
   useEffect(() => {
 async function fetchReports() {
       try {
-        const res = await fetch("https://myappapi-yo3p.onrender.com/getReports-admin");
+        const res = await fetch("https://myappapi-yo3p.onrender.com/getReportsadmin");
         const data: { success: boolean; Reports: Report[] } = await res.json();
         console.log("API response:", data.Reports[0]);
 
