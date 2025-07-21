@@ -44,7 +44,7 @@ export default function SettingsClient() {
   type Tab = (typeof tabs)[number];
   const [activeTab, setActiveTab] = useState<Tab>("account");
 //
-const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
+const BASE_URL =  "https://myappapi-yo3p.onrender.com";
 
   // Fetch user data on mount
   useEffect(() => {
