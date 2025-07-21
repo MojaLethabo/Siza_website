@@ -93,12 +93,14 @@ function ReportContent() {
             {report.MediaPhoto && (
               <div>
                 <p className="font-semibold mb-2">Attached Photo</p>
-                <Image
-                  src={`data:image/jpeg;base64,${report.MediaPhoto}`}
+                <img
+                  src={
+                    report.MediaPhoto.startsWith("data:")
+                      ? report.MediaPhoto
+                      : `data:image/jpeg;base64,${report.MediaPhoto}`
+                  }
                   alt="Report Media"
-                  className="rounded-lg shadow border"
-                  width={500}
-                  height={300}
+                  className="rounded-lg shadow border w-full max-w-[500px] h-auto"
                 />
               </div>
             )}
@@ -107,13 +109,16 @@ function ReportContent() {
                 <p className="font-semibold mb-2">Voice Note</p>
                 <audio
                   controls
-                  src={`data:audio/mpeg;base64,${report.MediaVoice}`}
+                  src={
+                    report.MediaVoice.startsWith("data:")
+                      ? report.MediaVoice
+                      : `data:audio/mpeg;base64,${report.MediaVoice}`
+                  }
                   className="w-full"
                 />
               </div>
             )}
           </div>
-
         </div>
 
         {/* Reporter Info */}
