@@ -88,37 +88,40 @@ function ReportContent() {
             <p><span className="font-medium text-gray-600">Shared With:</span> {report.SharedWith}</p>
           </div>
 
-          {/* Media Section */}
-          <div className="mt-6 grid sm:grid-cols-2 gap-6">
-            {report.MediaPhoto && (
-              <div>
-                <p className="font-semibold mb-2">Attached Photo</p>
-                <img
-                  src={
-                    report.MediaPhoto.startsWith("data:")
-                      ? report.MediaPhoto
-                      : `data:image/jpeg;base64,${report.MediaPhoto}`
-                  }
-                  alt="Report Media"
-                  className="rounded-lg shadow border w-full max-w-[500px] h-auto"
-                />
-              </div>
-            )}
-            {report.MediaVoice && (
-              <div>
-                <p className="font-semibold mb-2">Voice Note</p>
-                <audio
-                  controls
-                  src={
-                    report.MediaVoice.startsWith("data:")
-                      ? report.MediaVoice
-                      : `data:audio/mpeg;base64,${report.MediaVoice}`
-                  }
-                  className="w-full"
-                />
-              </div>
-            )}
-          </div>
+          
+         {/* Media Section */}
+<div className="mt-6 grid sm:grid-cols-2 gap-6">
+  {report.MediaPhoto && (
+    <div>
+      <p className="font-semibold mb-2">Attached Photo</p>
+      <img
+        src={
+          report.MediaPhoto.startsWith("data:")
+            ? report.MediaPhoto
+            : `data:image/jpeg;base64,${report.MediaPhoto}`
+        }
+        alt="Report Media"
+        className="rounded-lg shadow border w-full max-w-[500px] h-auto"
+      />
+    </div>
+  )}
+
+  {report.MediaVoice && (
+    <div>
+      <p className="font-semibold mb-2">Voice Note</p>
+      <audio
+        controls
+        className="w-full"
+        src={
+          report.MediaVoice.startsWith("data:")
+            ? report.MediaVoice
+            : `data:audio/mp4;base64,${report.MediaVoice}`
+        }
+      />
+    </div>
+  )}
+</div>
+
         </div>
 
         {/* Reporter Info */}
