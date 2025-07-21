@@ -94,7 +94,7 @@ function ReportContent() {
               <div>
                 <p className="font-semibold mb-2">Attached Photo</p>
                 <Image
-                  src={report.MediaPhoto}
+                  src={`data:image/jpeg;base64,${report.MediaPhoto}`}
                   alt="Report Media"
                   className="rounded-lg shadow border"
                   width={500}
@@ -105,10 +105,15 @@ function ReportContent() {
             {report.MediaVoice && (
               <div>
                 <p className="font-semibold mb-2">Voice Note</p>
-                <audio controls src={report.MediaVoice} className="w-full" />
+                <audio
+                  controls
+                  src={`data:audio/mpeg;base64,${report.MediaVoice}`}
+                  className="w-full"
+                />
               </div>
             )}
           </div>
+
         </div>
 
         {/* Reporter Info */}
