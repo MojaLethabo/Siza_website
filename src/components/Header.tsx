@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-//import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 
 export default function Header() {
@@ -11,7 +11,7 @@ export default function Header() {
   const [userOpen, setUserOpen] = useState(false);
   const notifRef = useRef<HTMLLIElement>(null);
   const userRef = useRef<HTMLLIElement>(null);
- // const { user, logout } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
   const [adminName, setAdminName] = useState("Guest");
   const [adminEmail, setAdminEmail] = useState("");
@@ -19,7 +19,7 @@ export default function Header() {
   const pathname = usePathname();
 
   const handleLogout = () => {
-  //  logout();
+    logout();
     router.push("/login");
     setUserOpen(false);
   };
@@ -70,7 +70,7 @@ export default function Header() {
       {/* Logo Header */}
       <div className="main-header-logo">
         <div className="logo-header" data-background-color="dark">
-          <Link href="/home" className="logo">
+          <Link href="/Home" className="logo">
             <img
               src="/img/siza.png"
               alt="navbar brand"
@@ -201,7 +201,7 @@ export default function Header() {
                 </div>
                 <span className="profile-username ms-2">
                   <span className="op-7">Hi,</span>{" "}
-                 {/*} <span className="fw-bold">{user?.Username || adminName}</span>*/}
+                  <span className="fw-bold">{user?.Username || adminName}</span>
                 </span>
               </button>
 
@@ -240,9 +240,9 @@ export default function Header() {
                         )}
                       </div>
                       <div className="u-text">
-                       {/*} <h4>{user?.Username || adminName}</h4>*/}
+                        <h4>{user?.Username || adminName}</h4>
                         <p className="text-muted">
-                         {/* {user?.Email || adminEmail}*/}
+                          {user?.Email || adminEmail}
                         </p>
                         <Link
                           href="/profile"

@@ -22,7 +22,7 @@ export default function Sidebar() {
         <div className="logo-header" data-background-color="dark">
 
 <Link
-  href="/home"
+  href="/Home"
   className="logo"
   style={{ width: "150px", height: "50px" }}
 >

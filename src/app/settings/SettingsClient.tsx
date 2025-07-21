@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+//import bcrypt from "bcrypt";
 import { useAuth } from "@/context/AuthContext";
-import Image from "next/image";
 
 interface User {
   UserID: number;
@@ -43,8 +43,6 @@ export default function SettingsClient() {
   const tabs = ["account", "appearance", "notifications", "language"] as const;
   type Tab = (typeof tabs)[number];
   const [activeTab, setActiveTab] = useState<Tab>("account");
-//
-const BASE_URL =  process.env.NEXT_PUBLIC_BACKEND_URL || "https://myappapi-yo3p.onrender.com";
 
   // Fetch user data on mount
   useEffect(() => {
@@ -61,7 +59,9 @@ const BASE_URL =  process.env.NEXT_PUBLIC_BACKEND_URL || "https://myappapi-yo3p.
         setCurrentUser(user);
 
         // Fetch fresh data from server
-        const response = await fetch(`${BASE_URL}/api/user/${user.UserID}`);
+        const response = await fetch(
+          `https://myappapi-yo3p.onrender.com/api/user/${user.UserID}`
+        );
         if (!response.ok) {
           throw new Error(`Failed to fetch user: ${response.status}`);
         }
@@ -69,14 +69,15 @@ const BASE_URL =  process.env.NEXT_PUBLIC_BACKEND_URL || "https://myappapi-yo3p.
         const userData = await response.json();
         setCurrentUser(userData);
         setLoading(false);
-      } catch (_err) {
+      } catch (err) {
         setError("Failed to load user data");
+        console.error("Settings fetch error:", err);
         setLoading(false);
       }
     };
 
     fetchUserData();
-  }, [router]);
+  }, []);
 
   // Handlers
   const startEdit = (field: string) => {
@@ -94,7 +95,7 @@ const BASE_URL =  process.env.NEXT_PUBLIC_BACKEND_URL || "https://myappapi-yo3p.
 
       // Send update to server
       const response = await fetch(
-        `${BASE_URL}/api/user/${currentUser.UserID}`,
+        `https://myappapi-yo3p.onrender.com/api/user/${currentUser.UserID}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -110,7 +111,8 @@ const BASE_URL =  process.env.NEXT_PUBLIC_BACKEND_URL || "https://myappapi-yo3p.
       localStorage.setItem("admin", JSON.stringify(updatedUser));
       updateUser(updatedUser);
       setEditingField(null);
-    } catch (_err) {
+    } catch (err) {
+      console.error("Full error:", err);
       setError("Failed to update profile");
       setCurrentUser(currentUser);
     }
@@ -126,7 +128,7 @@ const BASE_URL =  process.env.NEXT_PUBLIC_BACKEND_URL || "https://myappapi-yo3p.
       setCurrentUser({ ...currentUser, DarkMode: newDarkMode });
 
       const response = await fetch(
-        `${BASE_URL}/api/admin/${currentUser.UserID}/darkmode`,
+        `https://myappapi-yo3p.onrender.com/api/admin/${currentUser.UserID}/darkmode`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -147,7 +149,7 @@ const BASE_URL =  process.env.NEXT_PUBLIC_BACKEND_URL || "https://myappapi-yo3p.
         })
       );
       updateUser({ ...currentUser, DarkMode: newDarkMode });
-    } catch (_err) {
+    } catch (err) {
       setError("Failed to update appearance settings");
       // Revert on error
       setCurrentUser(currentUser);
@@ -185,7 +187,7 @@ const BASE_URL =  process.env.NEXT_PUBLIC_BACKEND_URL || "https://myappapi-yo3p.
 
             // Update in backend
             await fetch(
-              `${BASE_URL}/api/user/${currentUser.UserID}/photo`,
+              `https://myappapi-yo3p.onrender.com/api/user/${currentUser.UserID}/photo`,
               {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
@@ -202,7 +204,7 @@ const BASE_URL =  process.env.NEXT_PUBLIC_BACKEND_URL || "https://myappapi-yo3p.
               })
             );
             updateUser({ ...currentUser, ProfilePhoto: base64 });
-          } catch (_err) {
+          } catch (err) {
             setPhotoError("Failed to update profile photo");
             setCurrentUser(currentUser);
           }
@@ -235,7 +237,7 @@ const BASE_URL =  process.env.NEXT_PUBLIC_BACKEND_URL || "https://myappapi-yo3p.
 
     try {
       const response = await fetch(
-        `${BASE_URL}/api/user/${currentUser.UserID}/password`,
+        `https://myappapi-yo3p.onrender.com/api/user/${currentUser.UserID}/password`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -257,12 +259,8 @@ const BASE_URL =  process.env.NEXT_PUBLIC_BACKEND_URL || "https://myappapi-yo3p.
         setConfirmPwd("");
         setPwdSuccess(false);
       }, 1500);
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setPwdError(err.message);
-      } else {
-        setPwdError("Failed to update password");
-      }
+    } catch (err: any) {
+      setPwdError(err.message || "Failed to update password");
     }
   };
 
@@ -314,38 +312,37 @@ const BASE_URL =  process.env.NEXT_PUBLIC_BACKEND_URL || "https://myappapi-yo3p.
                 <div className="mb-4 text-center">
                   <div className="position-relative d-inline-block">
                     {currentUser.ProfilePhoto ? (
-                      <Image
+                      <img
                         src={currentUser.ProfilePhoto}
                         alt="Profile"
-                        width={120}
-                        height={120}
-                        style={{ borderRadius: "50%", objectFit: "cover" }}
-                        unoptimized
+                        className="rounded-circle"
+                        style={{
+                          width: "120px",
+                          height: "120px",
+                          objectFit: "cover",
+                        }}
                       />
                     ) : (
                       <div
                         className="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center"
-                        style={{ width: 120, height: 120, fontSize: 40 }}
+                        style={{ width: "120px", height: "120px" }}
                       >
-                        {currentUser.FullName.charAt(0).toUpperCase()}
+                        <i className="fas fa-user fa-2x"></i>
                       </div>
                     )}
-
-                    {/* Edit button */}
                     <button
+                      className="btn btn-sm btn-primary position-absolute bottom-0 end-0 rounded-circle"
                       onClick={() => fileInputRef.current?.click()}
-                      className="btn btn-sm btn-outline-primary position-absolute bottom-0 end-0"
-                      aria-label="Change Profile Photo"
-                      style={{ borderRadius: "50%" }}
+                      style={{ width: "36px", height: "36px" }}
                     >
-                      ✎
+                      <i className="fas fa-camera"></i>
                     </button>
                     <input
-                      ref={fileInputRef}
                       type="file"
-                      accept="image/*"
+                      ref={fileInputRef}
                       onChange={handlePhotoChange}
-                      hidden
+                      accept="image/*"
+                      className="d-none"
                     />
                   </div>
                   {photoError && (
@@ -353,158 +350,48 @@ const BASE_URL =  process.env.NEXT_PUBLIC_BACKEND_URL || "https://myappapi-yo3p.
                   )}
                 </div>
 
-                {/* Editable fields */}
+                {/* Editable Fields */}
                 {[
-                  { label: "Full Name", field: "FullName" },
-                  { label: "Email", field: "Email" },
-                  { label: "Username", field: "Username" },
-                  { label: "Phone Number", field: "PhoneNumber" },
-                ].map(({ label, field }) => (
-                  <div
-                    className="mb-3 d-flex align-items-center justify-content-between"
-                    key={field}
-                  >
-                    <label className="mb-0 fw-bold">{label}:</label>
-
-                    {editingField === field ? (
-                      <>
-                        <input
-                          type="text"
-                          className="form-control me-2"
-                          value={tempValue}
-                          onChange={(e) => setTempValue(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") saveField();
-                            if (e.key === "Escape") setEditingField(null);
-                          }}
-                          autoFocus
-                        />
-                        <button
-                          onClick={saveField}
-                          className="btn btn-primary btn-sm me-1"
-                          aria-label={`Save ${label}`}
-                        >
+                  { field: "FullName", label: "Full Name", type: "text" },
+                  { field: "Email", label: "Email", type: "email" },
+                  { field: "Username", label: "Username", type: "text" },
+                  { field: "PhoneNumber", label: "Phone Number", type: "text" },
+                ].map(({ field, label, type }) => (
+                  <div className="mb-3" key={field}>
+                    <label className="form-label">{label}</label>
+                    <div className="input-group">
+                      <input
+                        type={type}
+                        className="form-control"
+                        value={
+                          editingField === field
+                            ? tempValue
+                            : String(currentUser[field as keyof User] || "")
+                        }
+                        readOnly={editingField !== field}
+                        onChange={(e) => setTempValue(e.target.value)}
+                      />
+                      {editingField === field ? (
+                        <button className="btn btn-success" onClick={saveField}>
                           Save
                         </button>
+                      ) : (
                         <button
-                          onClick={() => setEditingField(null)}
-                          className="btn btn-secondary btn-sm"
-                          aria-label={`Cancel editing ${label}`}
+                          className="btn btn-outline-secondary"
+                          onClick={() => startEdit(field)}
                         >
-                          Cancel
+                          <i className="fas fa-edit" />
                         </button>
-                      </>
-                    ) : (
-                      <div
-                        role="button"
-                        tabIndex={0}
-                        className="text-break flex-grow-1"
-                        onClick={() => startEdit(field)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") startEdit(field);
-                        }}
-                        aria-label={`Edit ${label}`}
-                      >
-                        {currentUser[field as keyof User] || "-"}
-                      </div>
-                    )}
-                  </div>
-                ))}
-
-                {/* Change Password */}
-                <div className="mt-4">
-                  <button
-                    className="btn btn-warning"
-                    onClick={() => setShowPwdModal(true)}
-                  >
-                    Change Password
-                  </button>
-                </div>
-
-                {/* Password modal */}
-                {showPwdModal && (
-                  <div
-                    className="modal d-block"
-                    tabIndex={-1}
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby="passwordModalTitle"
-                  >
-                    <div className="modal-dialog">
-                      <div className="modal-content">
-                        <div className="modal-header">
-                          <h5 className="modal-title" id="passwordModalTitle">
-                            Change Password
-                          </h5>
-                          <button
-                            type="button"
-                            className="btn-close"
-                            onClick={() => setShowPwdModal(false)}
-                            aria-label="Close"
-                          ></button>
-                        </div>
-                        <div className="modal-body">
-                          {pwdError && (
-                            <div className="alert alert-danger">{pwdError}</div>
-                          )}
-                          {pwdSuccess && (
-                            <div className="alert alert-success">
-                              Password updated successfully!
-                            </div>
-                          )}
-
-                          <div className="mb-3">
-                            <label className="form-label">Old Password</label>
-                            <input
-                              type="password"
-                              className="form-control"
-                              value={oldPwd}
-                              onChange={(e) => setOldPwd(e.target.value)}
-                            />
-                          </div>
-
-                          <div className="mb-3">
-                            <label className="form-label">New Password</label>
-                            <input
-                              type="password"
-                              className="form-control"
-                              value={newPwd}
-                              onChange={(e) => setNewPwd(e.target.value)}
-                            />
-                          </div>
-
-                          <div className="mb-3">
-                            <label className="form-label">
-                              Confirm New Password
-                            </label>
-                            <input
-                              type="password"
-                              className="form-control"
-                              value={confirmPwd}
-                              onChange={(e) => setConfirmPwd(e.target.value)}
-                            />
-                          </div>
-                        </div>
-                        <div className="modal-footer">
-                          <button
-                            type="button"
-                            className="btn btn-secondary"
-                            onClick={() => setShowPwdModal(false)}
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-primary"
-                            onClick={updatePassword}
-                          >
-                            Update Password
-                          </button>
-                        </div>
-                      </div>
+                      )}
                     </div>
                   </div>
-                )}
+                ))}
+                <button
+                  className="btn btn-danger mt-3"
+                  onClick={() => setShowPwdModal(true)}
+                >
+                  Change Password
+                </button>
               </div>
             )}
 
@@ -512,37 +399,135 @@ const BASE_URL =  process.env.NEXT_PUBLIC_BACKEND_URL || "https://myappapi-yo3p.
             {activeTab === "appearance" && (
               <div>
                 <h4>Appearance</h4>
-                <p>
-                  <strong>Dark Mode:</strong>{" "}
-                  {currentUser.DarkMode === "Yes" ? "Enabled" : "Disabled"}
-                </p>
-                <button
-                  className="btn btn-outline-primary"
-                  onClick={toggleAppearance}
-                >
-                  Toggle Dark Mode
-                </button>
+                <div className="form-check form-switch">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    checked={currentUser.DarkMode === "Yes"}
+                    onChange={toggleAppearance}
+                    id="darkModeSwitch"
+                  />
+                  <label className="form-check-label" htmlFor="darkModeSwitch">
+                    Dark Mode
+                  </label>
+                </div>
               </div>
             )}
 
-            {/* Notifications (empty for now) */}
+            {/* Other tabs remain the same */}
+            {/* Notifications */}
             {activeTab === "notifications" && (
               <div>
                 <h4>Notifications</h4>
-                <p>No notification settings yet.</p>
+                {["email", "sms", "push"].map((key) => (
+                  <div className="form-check" key={key}>
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id={key}
+                    />
+                    <label className="form-check-label" htmlFor={key}>
+                      {key.charAt(0).toUpperCase() + key.slice(1)} Notifications
+                    </label>
+                  </div>
+                ))}
               </div>
             )}
 
-            {/* Language (empty for now) */}
+            {/* Language */}
             {activeTab === "language" && (
               <div>
                 <h4>Language</h4>
-                <p>No language settings yet.</p>
+                <select className="form-select w-auto">
+                  <option>English</option>
+                  <option>Spanish</option>
+                  <option>French</option>
+                  <option>German</option>
+                  <option>Chinese</option>
+                </select>
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Change Password Modal */}
+      {showPwdModal && (
+        <div
+          className="modal show d-block"
+          tabIndex={-1}
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          onClick={() => setShowPwdModal(false)}
+        >
+          <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Change Password</h5>
+                <button
+                  className="btn-close"
+                  onClick={() => setShowPwdModal(false)}
+                />
+              </div>
+              <div className="modal-body">
+                {pwdSuccess && (
+                  <div className="alert alert-success">
+                    Password updated successfully!
+                  </div>
+                )}
+                {pwdError && (
+                  <div className="alert alert-danger">{pwdError}</div>
+                )}
+                <div className="mb-3">
+                  <label className="form-label">Old Password</label>
+                  <input
+                    value={oldPwd}
+                    onChange={(e) => setOldPwd(e.target.value)}
+                    type="password"
+                    className="form-control"
+                    disabled={pwdSuccess}
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">New Password</label>
+                  <input
+                    value={newPwd}
+                    onChange={(e) => setNewPwd(e.target.value)}
+                    type="password"
+                    className="form-control"
+                    disabled={pwdSuccess}
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">Confirm New Password</label>
+                  <input
+                    value={confirmPwd}
+                    onChange={(e) => setConfirmPwd(e.target.value)}
+                    type="password"
+                    className="form-control"
+                    disabled={pwdSuccess}
+                  />
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setShowPwdModal(false)}
+                  disabled={pwdSuccess}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={updatePassword}
+                  disabled={pwdSuccess}
+                >
+                  Update Password
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
