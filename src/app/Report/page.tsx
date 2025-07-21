@@ -197,7 +197,7 @@ function ReportContent() {
 
     const fetchData = async () => {
       try {
-        const res = await fetch(`${BASE}/getReportWithReporter?id=${reportId}`);
+        const res = await fetch(`https://myappapi-yo3p.onrender.com/getReportWithReporter?id=${reportId}`);
         
         if (!res.ok) {
           throw new Error(`HTTP error! Status: ${res.status}`);
