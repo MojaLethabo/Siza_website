@@ -94,7 +94,7 @@ export default function SettingsClient() {
 
       // Send update to server
       const response = await fetch(
-        `http://localhost:3000/api/user/${currentUser.UserID}`,
+        `https://myappapi-yo3p.onrender.com/api/user/${currentUser.UserID}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -126,7 +126,7 @@ export default function SettingsClient() {
       setCurrentUser({ ...currentUser, DarkMode: newDarkMode });
 
       const response = await fetch(
-        `http://localhost:3000/api/admin/${currentUser.UserID}/darkmode`,
+        `https://myappapi-yo3p.onrender.com/api/admin/${currentUser.UserID}/darkmode`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -185,7 +185,7 @@ export default function SettingsClient() {
 
             // Update in backend
             await fetch(
-              `http://localhost:3000/api/user/${currentUser.UserID}/photo`,
+              `https://myappapi-yo3p.onrender.com/api/user/${currentUser.UserID}/photo`,
               {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
@@ -235,7 +235,7 @@ export default function SettingsClient() {
 
     try {
       const response = await fetch(
-        `http://localhost:3000/api/user/${currentUser.UserID}/password`,
+        `https://myappapi-yo3p.onrender.com/api/user/${currentUser.UserID}/password`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
