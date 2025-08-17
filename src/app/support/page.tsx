@@ -1,4 +1,4 @@
-import SupportDeskClient from "./SupportDesk";
+import SupportDeskClient from "./SupportDashboard";
 
 export const metadata = {
   title: "Profile – Siza Admin SupportDesk",

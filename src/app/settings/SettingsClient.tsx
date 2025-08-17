@@ -77,7 +77,7 @@ export default function SettingsClient() {
     };
 
     fetchUserData();
-  }, []);
+  }, [router]);
 
   // Handlers
   const startEdit = (field: string) => {
@@ -149,8 +149,9 @@ export default function SettingsClient() {
         })
       );
       updateUser({ ...currentUser, DarkMode: newDarkMode });
-    } catch (err) {
+    } catch (error) {
       setError("Failed to update appearance settings");
+      console.error("Full error:", error);
       // Revert on error
       setCurrentUser(currentUser);
     }
@@ -204,8 +205,9 @@ export default function SettingsClient() {
               })
             );
             updateUser({ ...currentUser, ProfilePhoto: base64 });
-          } catch (err) {
+          } catch (error) {
             setPhotoError("Failed to update profile photo");
+            console.error("Full error:", error);
             setCurrentUser(currentUser);
           }
         }
@@ -259,21 +261,39 @@ export default function SettingsClient() {
         setConfirmPwd("");
         setPwdSuccess(false);
       }, 1500);
-   } catch (err: unknown) {
-  if (err instanceof Error) {
-    setPwdError(err.message || "Failed to update password");
-  } else {
-    setPwdError("Failed to update password");
-  }
-}
-
+    } catch (error) {
+      console.error("Full error:", error);
+      // setPwdError(error.message || "Failed to update password");
+    }
   };
 
   if (loading) {
     return (
-      <div className="page-inner d-flex justify-content-center align-items-center">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
+      <div className="page-inner">
+        <div
+          className="d-flex justify-content-center align-items-center"
+          style={{
+            minHeight: "400px",
+            background: "linear-gradient(135deg, #ff0000 0%, #764ba2 100%)",
+            borderRadius: "12px",
+            color: "white",
+          }}
+        >
+          <div className="text-center">
+            <div
+              className="spinner-border mb-3"
+              role="status"
+              style={{
+                width: "3rem",
+                height: "3rem",
+                borderColor: "rgba(255,255,255,0.3)",
+                borderTopColor: "white",
+              }}
+            >
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <h5 className="fw-light">Loading settings...</h5>
+          </div>
         </div>
       </div>
     );
@@ -282,251 +302,587 @@ export default function SettingsClient() {
   if (error || !currentUser) {
     return (
       <div className="page-inner">
-        <div className="alert alert-danger">{error || "User not found"}</div>
+        <div className="alert alert-danger border-0 shadow-sm">
+          {error || "User not found"}
+        </div>
       </div>
     );
   }
-
+  /*background: "linear-gradient(135deg, #ff0000 0%, #764ba2 100%)", settings contaner*/
   return (
     <div className="page-inner">
-      <div className="row mx-auto" style={{ maxWidth: 1600 }}>
-        {/* Left nav */}
-        <div className="col-md-3">
-          <div className="nav flex-column nav-pills bg-white rounded p-3">
-            {tabs.map((tab) => (
-              <button
-                key={tab}
-                className={`nav-link mb-2${activeTab === tab ? " active" : ""}`}
-                onClick={() => setActiveTab(tab)}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
+      <style jsx>{`
+        .settings-container {
+          border-radius: 16px;
+          padding: 2rem;
+          box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+        }
 
-        {/* Right content */}
-        <div className="col-md-9">
-          <div className="bg-white rounded p-4">
-            {/* Account */}
-            {activeTab === "account" && (
-              <div>
-                <h4>My Account</h4>
+        .settings-nav {
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(20px);
+          border-radius: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+          padding: 1.5rem !important;
+        }
 
-                {/* Profile Photo */}
-                <div className="mb-4 text-center">
-                  <div className="position-relative d-inline-block">
-                    {currentUser.ProfilePhoto ? (
-                      <img
-                        src={currentUser.ProfilePhoto}
-                        alt="Profile"
-                        className="rounded-circle"
-                        style={{
-                          width: "120px",
-                          height: "120px",
-                          objectFit: "cover",
-                        }}
-                      />
-                    ) : (
-                      <div
-                        className="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center"
-                        style={{ width: "120px", height: "120px" }}
-                      >
-                        <i className="fas fa-user fa-2x"></i>
-                      </div>
-                    )}
+        .nav-title {
+          color: black;
+          font-size: 1.1rem;
+          font-weight: 600;
+          margin-bottom: 1.5rem;
+          padding-bottom: 1rem;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .nav-link {
+          color: rgba(255, 255, 255, 0.7);
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 12px;
+          padding: 1rem 1.25rem;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          font-weight: 500;
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          margin-bottom: 0.75rem;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .nav-link::before {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.1),
+            transparent
+          );
+          transition: left 0.5s ease;
+        }
+
+        .nav-link:hover::before {
+          left: 100%;
+        }
+
+        .nav-link:hover {
+          background: rgba(255, 255, 255, 0.15);
+          color: white;
+          border-color: rgba(255, 255, 255, 0.3);
+          transform: translateY(-2px) scale(1.02);
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .nav-link.active {
+          background: rgba(255, 255, 255, 0.2);
+          color: white;
+          border-color: rgba(255, 255, 255, 0.4);
+          box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+          transform: scale(1.02);
+        }
+
+        .nav-link.active::after {
+          content: "";
+          position: absolute;
+          right: 12px;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 6px;
+          height: 6px;
+          background: white;
+          border-radius: 50%;
+          box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        .nav-icon {
+          font-size: 1.1rem;
+          width: 20px;
+          text-align: center;
+        }
+
+        .content-card {
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(10px);
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .form-control {
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          padding: 0.75rem;
+          transition: all 0.3s ease;
+          background: rgba(255, 255, 255, 0.8);
+        }
+
+        .form-control:focus {
+          border-color: #667eea;
+          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+          background: white;
+        }
+
+        .btn-gradient {
+          background: linear-gradient(135deg, #ff0000 0%, #764ba2 100%);
+          border: none;
+          color: white;
+          padding: 0.5rem 1rem;
+          border-radius: 8px;
+          font-weight: 500;
+          transition: all 0.3s ease;
+        }
+
+        .btn-gradient:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+          color: white;
+        }
+
+        .btn-outline-gradient {
+          border: 2px solid #667eea;
+          color: #667eea;
+          background: transparent;
+          padding: 0.5rem 1rem;
+          border-radius: 8px;
+          font-weight: 500;
+          transition: all 0.3s ease;
+        }
+
+        .btn-outline-gradient:hover {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          border-color: transparent;
+        }
+
+        .profile-photo-container {
+          position: relative;
+          display: inline-block;
+          border: 4px solid white;
+          border-radius: 50%;
+          box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+        }
+
+        .photo-upload-btn {
+          background: linear-gradient(135deg, #ff0000 0%, #764ba2 100%);
+          border: 2px solid white;
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.3s ease;
+        }
+
+        .photo-upload-btn:hover {
+          transform: scale(1.1);
+          box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .form-switch .form-check-input {
+          width: 3rem;
+          height: 1.5rem;
+          background-color: linear-gradient(135deg, #ff0000 0%, #764ba2 100%);
+        }
+
+        .form-switch .form-check-input:checked {
+          background: linear-gradient(135deg, #ff0000 0%, #764ba2 100%);
+          border-color: #667eea;
+        }
+
+        .modal-content {
+          border: none;
+          border-radius: 12px;
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .modal-header {
+          background: linear-gradient(135deg, #ff0000 0%, #764ba2 100%);
+          color: white;
+          border-radius: 12px 12px 0 0;
+        }
+
+        .section-title {
+          color: #1e293b;
+          font-weight: 600;
+          margin-bottom: 1.5rem;
+          position: relative;
+          padding-bottom: 0.5rem;
+        }
+
+        .section-title::after {
+          content: "";
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 50px;
+          height: 3px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border-radius: 2px;
+        }
+      `}</style>
+
+      <div className="settings-container">
+        <div className="row mx-auto" style={{ maxWidth: 1600 }}>
+          {/* Left Navigation */}
+          <div className="col-md-3 mb-4">
+            <div className="settings-nav">
+              <div className="nav-title">
+                <i className="fas fa-cog me-2"></i>
+                Settings
+              </div>
+              <div className="nav flex-column nav-pills">
+                {tabs.map((tab) => {
+                  const icons = {
+                    account: "fas fa-user-circle",
+                    appearance: "fas fa-paint-brush",
+                    notifications: "fas fa-bell",
+                    language: "fas fa-globe-americas",
+                  };
+
+                  return (
                     <button
-                      className="btn btn-sm btn-primary position-absolute bottom-0 end-0 rounded-circle"
-                      onClick={() => fileInputRef.current?.click()}
-                      style={{ width: "36px", height: "36px" }}
+                      key={tab}
+                      className={`nav-link${
+                        activeTab === tab ? " active" : ""
+                      }`}
+                      onClick={() => setActiveTab(tab)}
                     >
-                      <i className="fas fa-camera"></i>
+                      <i className={`${icons[tab]} nav-icon`}></i>
+                      <span>{tab.charAt(0).toUpperCase() + tab.slice(1)}</span>
                     </button>
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handlePhotoChange}
-                      accept="image/*"
-                      className="d-none"
-                    />
-                  </div>
-                  {photoError && (
-                    <div className="text-danger mt-2">{photoError}</div>
-                  )}
-                </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
 
-                {/* Editable Fields */}
-                {[
-                  { field: "FullName", label: "Full Name", type: "text" },
-                  { field: "Email", label: "Email", type: "email" },
-                  { field: "Username", label: "Username", type: "text" },
-                  { field: "PhoneNumber", label: "Phone Number", type: "text" },
-                ].map(({ field, label, type }) => (
-                  <div className="mb-3" key={field}>
-                    <label className="form-label">{label}</label>
-                    <div className="input-group">
-                      <input
-                        type={type}
-                        className="form-control"
-                        value={
-                          editingField === field
-                            ? tempValue
-                            : String(currentUser[field as keyof User] || "")
-                        }
-                        readOnly={editingField !== field}
-                        onChange={(e) => setTempValue(e.target.value)}
-                      />
-                      {editingField === field ? (
-                        <button className="btn btn-success" onClick={saveField}>
-                          Save
-                        </button>
+          {/* Right Content */}
+          <div className="col-md-9">
+            <div className="content-card p-4">
+              {/* Account Settings */}
+              {activeTab === "account" && (
+                <div>
+                  <h4 className="section-title">Account Settings</h4>
+
+                  {/* Profile Photo Section */}
+                  <div className="mb-5 text-center">
+                    <div className="profile-photo-container">
+                      {currentUser.ProfilePhoto ? (
+                        <img
+                          src={currentUser.ProfilePhoto}
+                          alt="Profile"
+                          className="rounded-circle"
+                          style={{
+                            width: "120px",
+                            height: "120px",
+                            objectFit: "cover",
+                          }}
+                        />
                       ) : (
-                        <button
-                          className="btn btn-outline-secondary"
-                          onClick={() => startEdit(field)}
+                        <div
+                          className="bg-gradient text-white rounded-circle d-flex align-items-center justify-content-center"
+                          style={{
+                            width: "120px",
+                            height: "120px",
+                            background:
+                              "linear-gradient(135deg, #ff0000 0%, #764ba2 100%)",
+                          }}
                         >
-                          <i className="fas fa-edit" />
-                        </button>
+                          <i className="fas fa-user fa-2x"></i>
+                        </div>
                       )}
+                      <button
+                        className="photo-upload-btn position-absolute bottom-0 end-0"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <i className="fas fa-camera"></i>
+                      </button>
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handlePhotoChange}
+                        accept="image/*"
+                        className="d-none"
+                      />
+                    </div>
+                    {photoError && (
+                      <div className="text-danger mt-2 small">{photoError}</div>
+                    )}
+                  </div>
+
+                  {/* Profile Information */}
+                  <div className="row">
+                    {[
+                      {
+                        field: "FullName",
+                        label: "Full Name",
+                        type: "text",
+                        icon: "fas fa-user",
+                      },
+                      {
+                        field: "Email",
+                        label: "Email Address",
+                        type: "email",
+                        icon: "fas fa-envelope",
+                      },
+                      {
+                        field: "Username",
+                        label: "Username",
+                        type: "text",
+                        icon: "fas fa-at",
+                      },
+                      {
+                        field: "PhoneNumber",
+                        label: "Phone Number",
+                        type: "text",
+                        icon: "fas fa-phone",
+                      },
+                    ].map(({ field, label, type, icon }) => (
+                      <div className="col-md-6 mb-4" key={field}>
+                        <label className="form-label fw-semibold text-dark">
+                          <i className={`${icon} me-2`}></i>
+                          {label}
+                        </label>
+                        <div className="input-group">
+                          <input
+                            type={type}
+                            className="form-control"
+                            value={
+                              editingField === field
+                                ? tempValue
+                                : String(currentUser[field as keyof User] || "")
+                            }
+                            readOnly={editingField !== field}
+                            onChange={(e) => setTempValue(e.target.value)}
+                          />
+                          {editingField === field ? (
+                            <button
+                              className="btn btn-gradient"
+                              onClick={saveField}
+                            >
+                              <i className="fas fa-check me-1"></i>Save
+                            </button>
+                          ) : (
+                            <button
+                              className="btn btn-outline-gradient"
+                              onClick={() => startEdit(field)}
+                            >
+                              <i className="fas fa-edit" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-4 pt-3 border-top">
+                    <button
+                      className="btn btn-gradient"
+                      onClick={() => setShowPwdModal(true)}
+                    >
+                      <i className="fas fa-key me-2"></i>Change Password
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Appearance Settings */}
+              {activeTab === "appearance" && (
+                <div>
+                  <h4 className="section-title">Appearance Settings</h4>
+                  <div className="row">
+                    <div className="col-md-8">
+                      <div className="d-flex align-items-center justify-content-between p-3 bg-light rounded-3">
+                        <div>
+                          <h6 className="mb-1 fw-semibold">Dark Mode</h6>
+                          <small className="text-muted">
+                            Switch between light and dark theme
+                          </small>
+                        </div>
+                        <div className="form-check form-switch">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            checked={currentUser.DarkMode === "Yes"}
+                            onChange={toggleAppearance}
+                            id="darkModeSwitch"
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
-                ))}
-                <button
-                  className="btn btn-danger mt-3"
-                  onClick={() => setShowPwdModal(true)}
-                >
-                  Change Password
-                </button>
-              </div>
-            )}
-
-            {/* Appearance */}
-            {activeTab === "appearance" && (
-              <div>
-                <h4>Appearance</h4>
-                <div className="form-check form-switch">
-                  <input
-                    className="form-check-input"
-                    type="checkbox"
-                    checked={currentUser.DarkMode === "Yes"}
-                    onChange={toggleAppearance}
-                    id="darkModeSwitch"
-                  />
-                  <label className="form-check-label" htmlFor="darkModeSwitch">
-                    Dark Mode
-                  </label>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Other tabs remain the same */}
-            {/* Notifications */}
-            {activeTab === "notifications" && (
-              <div>
-                <h4>Notifications</h4>
-                {["email", "sms", "push"].map((key) => (
-                  <div className="form-check" key={key}>
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      id={key}
-                    />
-                    <label className="form-check-label" htmlFor={key}>
-                      {key.charAt(0).toUpperCase() + key.slice(1)} Notifications
-                    </label>
+              {/* Notifications Settings */}
+              {activeTab === "notifications" && (
+                <div>
+                  <h4 className="section-title">Notification Preferences</h4>
+                  <div className="row">
+                    {[
+                      {
+                        key: "email",
+                        title: "Email Notifications",
+                        desc: "Receive updates via email",
+                        icon: "fas fa-envelope",
+                      },
+                      {
+                        key: "sms",
+                        title: "SMS Notifications",
+                        desc: "Receive updates via SMS",
+                        icon: "fas fa-sms",
+                      },
+                      {
+                        key: "push",
+                        title: "Push Notifications",
+                        desc: "Receive browser notifications",
+                        icon: "fas fa-bell",
+                      },
+                    ].map(({ key, title, desc, icon }) => (
+                      <div className="col-md-6 mb-3" key={key}>
+                        <div className="d-flex align-items-center justify-content-between p-3 bg-light rounded-3">
+                          <div className="d-flex align-items-center">
+                            <i className={`${icon} text-primary me-3`}></i>
+                            <div>
+                              <h6 className="mb-0 fw-semibold">{title}</h6>
+                              <small className="text-muted">{desc}</small>
+                            </div>
+                          </div>
+                          <div className="form-check">
+                            <input
+                              className="form-check-input"
+                              type="checkbox"
+                              id={key}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
+                </div>
+              )}
 
-            {/* Language */}
-            {activeTab === "language" && (
-              <div>
-                <h4>Language</h4>
-                <select className="form-select w-auto">
-                  <option>English</option>
-                  <option>Spanish</option>
-                  <option>French</option>
-                  <option>German</option>
-                  <option>Chinese</option>
-                </select>
-              </div>
-            )}
+              {/* Language Settings */}
+              {activeTab === "language" && (
+                <div>
+                  <h4 className="section-title">Language & Region</h4>
+                  <div className="row">
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold">
+                        <i className="fas fa-globe me-2"></i>
+                        Select Language
+                      </label>
+                      <select className="form-select">
+                        <option>English</option>
+                        <option>Spanish</option>
+                        <option>French</option>
+                        <option>German</option>
+                        <option>Chinese</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Change Password Modal */}
+      {/* Enhanced Password Change Modal */}
       {showPwdModal && (
         <div
           className="modal show d-block"
           tabIndex={-1}
-          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          style={{
+            backgroundColor:
+              "linear-gradient(135deg, #ff0000 0%, #764ba2 100%)",
+          }}
           onClick={() => setShowPwdModal(false)}
         >
           <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
             <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Change Password</h5>
+              <div className="modal-header border-0">
+                <h5 className="modal-title fw-semibold">
+                  <i className="fas fa-key me-2"></i>Change Password
+                </h5>
                 <button
-                  className="btn-close"
+                  className="btn-close btn-close-white"
                   onClick={() => setShowPwdModal(false)}
                 />
               </div>
               <div className="modal-body">
                 {pwdSuccess && (
-                  <div className="alert alert-success">
+                  <div className="alert alert-success border-0 bg-success bg-opacity-10 text-success">
+                    <i className="fas fa-check-circle me-2"></i>
                     Password updated successfully!
                   </div>
                 )}
                 {pwdError && (
-                  <div className="alert alert-danger">{pwdError}</div>
+                  <div className="alert alert-danger border-0 bg-danger bg-opacity-10 text-danger">
+                    <i className="fas fa-exclamation-triangle me-2"></i>
+                    {pwdError}
+                  </div>
                 )}
                 <div className="mb-3">
-                  <label className="form-label">Old Password</label>
+                  <label className="form-label fw-semibold">
+                    Current Password
+                  </label>
                   <input
                     value={oldPwd}
                     onChange={(e) => setOldPwd(e.target.value)}
                     type="password"
                     className="form-control"
                     disabled={pwdSuccess}
+                    placeholder="Enter your current password"
                   />
                 </div>
                 <div className="mb-3">
-                  <label className="form-label">New Password</label>
+                  <label className="form-label fw-semibold">New Password</label>
                   <input
                     value={newPwd}
                     onChange={(e) => setNewPwd(e.target.value)}
                     type="password"
                     className="form-control"
                     disabled={pwdSuccess}
+                    placeholder="Enter your new password"
                   />
                 </div>
                 <div className="mb-3">
-                  <label className="form-label">Confirm New Password</label>
+                  <label className="form-label fw-semibold">
+                    Confirm New Password
+                  </label>
                   <input
                     value={confirmPwd}
                     onChange={(e) => setConfirmPwd(e.target.value)}
                     type="password"
                     className="form-control"
                     disabled={pwdSuccess}
+                    placeholder="Confirm your new password"
                   />
                 </div>
               </div>
-              <div className="modal-footer">
+              <div className="modal-footer border-0">
                 <button
-                  className="btn btn-secondary"
+                  className="btn btn-light"
                   onClick={() => setShowPwdModal(false)}
                   disabled={pwdSuccess}
                 >
                   Cancel
                 </button>
                 <button
-                  className="btn btn-primary"
+                  className="btn btn-gradient"
                   onClick={updatePassword}
                   disabled={pwdSuccess}
                 >
-                  Update Password
+                  <i className="fas fa-save me-2"></i>Update Password
                 </button>
               </div>
             </div>

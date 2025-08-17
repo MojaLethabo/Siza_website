@@ -37,7 +37,7 @@ const greenPinIcon = new L.Icon({
 export default function MapComponent({ incidents, router }: MapComponentProps) {
   return (
     <MapContainer
-      center={[-26.140, 28.0125]}
+      center={[-26.14, 28.0125]}
       zoom={14}
       scrollWheelZoom={true}
       style={{ height: "100%", width: "100%" }}
@@ -48,36 +48,36 @@ export default function MapComponent({ incidents, router }: MapComponentProps) {
       />
 
       {incidents
-  .filter(incident =>
-    typeof incident.lat === "number" &&
-    typeof incident.lng === "number" &&
-    !isNaN(incident.lat) &&
-    !isNaN(incident.lng)
-  )
-  .map(({ id, lat, lng, description, status }) => (
-    <Marker
-      key={id}
-      position={[lat, lng]}
-      icon={status === "Completed" ? greenPinIcon : redPinIcon}
-    >
-      <Tooltip direction="top" offset={[0, -30]} opacity={1} permanent>
-        Incident #{id}
-      </Tooltip>
-      <Popup>
-        <strong className="block mb-1 text-red-600">Emergency:</strong>
-        <p className="mb-2">{description}</p>
-        <button
-          onClick={() => {
-            router.push(`/Report?id=${id}`);
-          }}
-          className="text-red-600 hover:text-red-800 underline font-semibold"
-        >
-          View Report
-        </button>
-      </Popup>
-    </Marker>
-))}
-
+        .filter(
+          (incident) =>
+            typeof incident.lat === "number" &&
+            typeof incident.lng === "number" &&
+            !isNaN(incident.lat) &&
+            !isNaN(incident.lng)
+        )
+        .map(({ id, lat, lng, description, status }) => (
+          <Marker
+            key={id}
+            position={[lat, lng]}
+            icon={status === "Completed" ? greenPinIcon : redPinIcon}
+          >
+            <Tooltip direction="top" offset={[0, -30]} opacity={1} permanent>
+              Incident #{id}
+            </Tooltip>
+            <Popup>
+              <strong className="block mb-1 text-red-600">Emergency:</strong>
+              <p className="mb-2">{description}</p>
+              <button
+                onClick={() => {
+                  router.push(`/Report?id=${id}`);
+                }}
+                className="text-red-600 hover:text-red-800 underline font-semibold"
+              >
+                View Report
+              </button>
+            </Popup>
+          </Marker>
+        ))}
     </MapContainer>
   );
 }

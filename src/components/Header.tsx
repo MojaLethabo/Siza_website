@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import { formatDistanceToNow } from "date-fns";
+import { useNotification } from "@/context/NotificationContext";
 
 export default function Header() {
   const [notifOpen, setNotifOpen] = useState(false);
@@ -16,6 +18,21 @@ export default function Header() {
   const [adminName, setAdminName] = useState("Guest");
   const [adminEmail, setAdminEmail] = useState("");
 
+  // Updated to use topUnreadNotifications
+  const {
+    topUnreadNotifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    fetchNotifications,
+  } = useNotification();
+
+  // Mark notifications as read when dropdown is opened
+  useEffect(() => {
+    if (notifOpen && unreadCount > 0) {
+      markAllAsRead();
+    }
+  }, [notifOpen]);
   const pathname = usePathname();
 
   const handleLogout = () => {
@@ -70,7 +87,7 @@ export default function Header() {
       {/* Logo Header */}
       <div className="main-header-logo">
         <div className="logo-header" data-background-color="dark">
-          <Link href="/Home" className="logo">
+          <Link href="/home" className="logo">
             <img
               src="/img/siza.png"
               alt="navbar brand"
@@ -105,16 +122,24 @@ export default function Header() {
               style={{ position: "relative" }}
             >
               <button
-                className="nav-link btn btn-link"
+                className="nav-link btn btn-link position-relative p-2"
                 onClick={() => {
                   setNotifOpen((o) => !o);
                   setUserOpen(false);
+                  if (!notifOpen) fetchNotifications();
                 }}
                 aria-haspopup="true"
                 aria-expanded={notifOpen}
               >
                 <i className="fas fa-bell"></i>
-                <span className="notification">4</span>
+                {unreadCount > 0 && (
+                  <span className="notification">
+                    {unreadCount}
+                    <span className="visually-hidden">
+                      unread notifications
+                    </span>
+                  </span>
+                )}
               </button>
 
               <ul
@@ -125,32 +150,91 @@ export default function Header() {
               >
                 <li>
                   <div className="dropdown-title">
-                    You have 4 new notifications
+                    {unreadCount > 0
+                      ? `You have ${unreadCount} new notification${
+                          unreadCount > 1 ? "s" : ""
+                        }`
+                      : "No new notifications"}
                   </div>
                 </li>
                 <li>
                   <div className="notif-scroll scrollbar-outer">
                     <div className="notif-center">
-                      <Link href="/notifications" className="notif-item">
-                        <div className="notif-icon notif-primary">
-                          <i className="fas fa-user-plus"></i>
+                      {topUnreadNotifications.slice(0, 3).map((notif) => {
+                        // Determine notification styling based on type
+                        const getNotificationStyle = () => {
+                          switch (notif.type) {
+                            case "warning":
+                              return "bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-2 rounded";
+                            case "success":
+                              return "bg-green-50 border-l-4 border-green-400 p-3 mb-2 rounded";
+                            case "broadcast":
+                            case "user":
+                            default:
+                              return "";
+                          }
+                        };
+
+                        return (
+                          <Link
+                            href={notif.link}
+                            className={`notif-item ${getNotificationStyle()}`}
+                            key={notif.id}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              markAsRead(notif.id);
+                              router.push(notif.link);
+                              setNotifOpen(false);
+                            }}
+                          >
+                            <div className="flex items-start">
+                              <div
+                                className={`notif-icon ${
+                                  notif.type === "user"
+                                    ? "notif-primary"
+                                    : notif.type === "msgModeration"
+                                    ? "notif-warning"
+                                    : "notif-success"
+                                }`}
+                              >
+                                <i
+                                  className={`fas ${
+                                    notif.type === "user"
+                                      ? "fa-user-plus"
+                                      : notif.type === "msgModeration"
+                                      ? "fa-exclamation-triangle"
+                                      : notif.type === "success"
+                                      ? "fa-check-circle"
+                                      : "fa-broadcast-tower"
+                                  }`}
+                                />
+                              </div>
+                              <div className="notif-content">
+                                <span className="block font-medium">
+                                  {notif.title}
+                                </span>
+                                <span className="block small text-muted">
+                                  {notif.content.length > 38
+                                    ? notif.content.slice(0, 35) + "..."
+                                    : notif.content}
+                                </span>
+                                <span className="time">
+                                  {formatDistanceToNow(notif.createdAt, {
+                                    addSuffix: true,
+                                  })}
+                                </span>
+                              </div>
+                            </div>
+                          </Link>
+                        );
+                      })}
+
+                      {topUnreadNotifications.length === 0 && (
+                        <div className="text-center py-3 text-muted">
+                          <i className="fas fa-bell-slash fa-2x mb-2"></i>
+                          <p>No notifications yet</p>
                         </div>
-                        <div className="notif-content">
-                          <span className="block">New user registered</span>
-                          <span className="time">5 minutes ago</span>
-                        </div>
-                      </Link>
-                      <Link href="/notifications" className="notif-item">
-                        <div className="notif-icon notif-success">
-                          <i className="fas fa-comment"></i>
-                        </div>
-                        <div className="notif-content">
-                          <span className="block">
-                            Rahmad commented on Admin
-                          </span>
-                          <span className="time">12 minutes ago</span>
-                        </div>
-                      </Link>
+                      )}
                     </div>
                   </div>
                 </li>

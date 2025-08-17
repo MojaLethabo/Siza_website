@@ -19,11 +19,14 @@ export default function LoginPage() {
     setMessage("");
 
     try {
-      const response = await fetch("https://myappapi-yo3p.onrender.com/login-admin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      const response = await fetch(
+        "https://myappapi-yo3p.onrender.com/login-admin",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -59,9 +62,9 @@ export default function LoginPage() {
           <Image
             src="/img/hanover1.png"
             alt="Siza"
-            className={`mb-2 ms-4 ${styles.img}`}
-            width={100}
-            height={100}
+            className={`mb-2 ms-14 ${styles.img}`}
+            width={160}
+            height={160}
             priority
           />
           <h1>Siza Admin</h1>

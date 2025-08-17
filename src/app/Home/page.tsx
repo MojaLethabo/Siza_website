@@ -1,13 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation"; 
-import dynamic from 'next/dynamic';
+import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import { usePathname } from "next/navigation";
 
 // Dynamically import the MapContainer with no SSR
-const DynamicMap = dynamic(() => import('@/components/MapComponent'), {
+const DynamicMap = dynamic(() => import("@/components/MapComponent"), {
   ssr: false,
-  loading: () => <div className="h-96 bg-gray-100 rounded-lg flex items-center justify-center">Loading map...</div>
+  loading: () => (
+    <div className="h-96 bg-gray-100 rounded-lg flex items-center justify-center">
+      Loading map...
+    </div>
+  ),
 });
 
 // Define TypeScript interface for a report
@@ -33,9 +38,11 @@ export default function HomePage() {
   const router = useRouter();
   const [isClient, setIsClient] = useState(false);
   const [incidents, setIncidents] = useState<Incident[]>([]);
-const [memberCount, setMemberCount] = useState<number | null>(null);
-const [reportCount, setReportCount] = useState<number | null>(null);
-const [completedCount, setCompletedCount] = useState<number | null>(null);
+  const [memberCount, setMemberCount] = useState<number | null>(null);
+  const [reportCount, setReportCount] = useState<number | null>(null);
+  const [completedCount, setCompletedCount] = useState<number | null>(null);
+  const pathname = usePathname(); // Use this hook instead
+  const isHomePage = pathname === "/Home";
 
   // Simple client-side hydration check
   useEffect(() => {
@@ -44,9 +51,13 @@ const [completedCount, setCompletedCount] = useState<number | null>(null);
 
   // Fetch reports after component is mounted
   useEffect(() => {
-async function fetchReports() {
+    if (!isClient || !isHomePage) return;
+
+    async function fetchReports() {
       try {
-        const res = await fetch("https://myappapi-yo3p.onrender.com/getReportsadmin");
+        const res = await fetch(
+          "https://myappapi-yo3p.onrender.com/getReportsadmin"
+        );
         const data: { success: boolean; Reports: Report[] } = await res.json();
         console.log("API response:", data.Reports[0]);
 
@@ -69,57 +80,64 @@ async function fetchReports() {
         console.error("Failed to fetch reports:", error);
         setIncidents([]);
       }
-}
-async function fetchCommunityMemberCount() {
-  try {
-    const res = await fetch("https://myappapi-yo3p.onrender.com/community/count");
-    const data = await res.json();
-    if (data.success) {
-      setMemberCount(data.count);
-    } else {
-      setMemberCount(0);
     }
-  } catch (error) {
-    console.error("Failed to fetch community member count:", error);
-    setMemberCount(0);
-  }
-}
-async function fetchReportCount() {
-  try {
-    const res = await fetch("https://myappapi-yo3p.onrender.com/reports/count");
-    const data = await res.json();
-    if (data.success) {
-      setReportCount(data.count);
-    } else {
-      setReportCount(0);
+    async function fetchCommunityMemberCount() {
+      try {
+        const res = await fetch(
+          "https://myappapi-yo3p.onrender.com/community/count"
+        );
+        const data = await res.json();
+        if (data.success) {
+          setMemberCount(data.count);
+        } else {
+          setMemberCount(0);
+        }
+      } catch (error) {
+        console.error("Failed to fetch community member count:", error);
+        setMemberCount(0);
+      }
     }
-  } catch (error) {
-    console.error("Failed to fetch report count:", error);
-    setReportCount(0);
-  }
-}
-async function fetchCompletedCount() {
-  try {
-    const res = await fetch("https://myappapi-yo3p.onrender.com/reports/count/completed");
-    const data = await res.json();
-    if (data.success) {
-      setCompletedCount(data.count);
-    } else {
-      setCompletedCount(0);
+    async function fetchReportCount() {
+      try {
+        const res = await fetch(
+          "https://myappapi-yo3p.onrender.com/reports/count"
+        );
+        const data = await res.json();
+        if (data.success) {
+          setReportCount(data.count);
+        } else {
+          setReportCount(0);
+        }
+      } catch (error) {
+        console.error("Failed to fetch report count:", error);
+        setReportCount(0);
+      }
     }
-  } catch (error) {
-    console.error("Failed to fetch completed report count:", error);
-    setCompletedCount(0);
-  }
-}
+    async function fetchCompletedCount() {
+      try {
+        const res = await fetch(
+          "https://myappapi-yo3p.onrender.com/reports/count/completed"
+        );
+        const data = await res.json();
+        if (data.success) {
+          setCompletedCount(data.count);
+        } else {
+          setCompletedCount(0);
+        }
+      } catch (error) {
+        console.error("Failed to fetch completed report count:", error);
+        setCompletedCount(0);
+      }
+    }
 
-if (isClient) {
-  fetchReports();
-  fetchCommunityMemberCount();
-  fetchReportCount();
-  fetchCompletedCount(); 
-}
-  }, [isClient]);
+    // Execute all fetches in parallel
+    Promise.allSettled([
+      fetchReports(),
+      fetchCommunityMemberCount(),
+      fetchReportCount(),
+      fetchCompletedCount(),
+    ]);
+  }, [isClient, isHomePage]);
 
   return (
     <div className="min-h-screen bg-gradient-to-tr from-green-50 via-blue-50 to-white p-6 font-sans text-gray-800">
@@ -141,30 +159,38 @@ if (isClient) {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-10">
         {[
           {
-    title: "Community Members",
-    count: memberCount !== null ? memberCount.toLocaleString() : "Loading...",
-    icon: "fas fa-users",
-    color: "text-blue-600",
-  },
+            title: "Community Members",
+            count:
+              memberCount !== null
+                ? memberCount.toLocaleString()
+                : "Loading...",
+            icon: "fas fa-users",
+            color: "text-blue-600",
+          },
           {
             title: "Active members",
             count: "1",
             icon: "fas fa-user-check",
             color: "text-green-600",
           },
-           {
-    title: "Reports",
-    count: reportCount !== null ? reportCount.toLocaleString() : "Loading...",
-    icon: "fas fa-luggage-cart",
-    color: "text-yellow-600",
-  },
           {
-  title: "Completed Report",
-  count: completedCount !== null ? completedCount.toLocaleString() : "Loading...",
-  icon: "far fa-check-circle",
-  color: "text-purple-600",
-}
-,
+            title: "Reports",
+            count:
+              reportCount !== null
+                ? reportCount.toLocaleString()
+                : "Loading...",
+            icon: "fas fa-luggage-cart",
+            color: "text-yellow-600",
+          },
+          {
+            title: "Completed Report",
+            count:
+              completedCount !== null
+                ? completedCount.toLocaleString()
+                : "Loading...",
+            icon: "far fa-check-circle",
+            color: "text-purple-600",
+          },
         ].map((card, index) => (
           <div
             key={index}
@@ -176,7 +202,9 @@ if (isClient) {
               <i className={card.icon}></i>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-500">{card.title}</p>
+              <p className="text-sm font-semibold text-gray-500">
+                {card.title}
+              </p>
               <h4 className="text-2xl font-bold text-gray-900">{card.count}</h4>
             </div>
           </div>
@@ -201,7 +229,9 @@ if (isClient) {
           </div>
         </div>
 
-        <div style={{ height: "450px", borderRadius: "12px", overflow: "hidden" }}>
+        <div
+          style={{ height: "450px", borderRadius: "12px", overflow: "hidden" }}
+        >
           {isClient && <DynamicMap incidents={incidents} router={router} />}
         </div>
       </section>

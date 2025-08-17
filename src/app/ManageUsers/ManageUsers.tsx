@@ -2,289 +2,635 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-//import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
+import SleepModal from "@/components/SleepModal";
+import { usePathname } from "next/navigation";
+import MisuseDetailsModal from "@/components/MisuseDetailsModal";
+import FlagDetailsModal from "@/components/FlagDetailsModal";
 
 interface CommunityMember {
   UserID: number;
   FullName: string;
-  Username: string;
   Email: string;
   PhoneNumber: string;
-  Role: string;
-  DOB: string;
-  CreatedAt: string;
-  HomeAddress: string;
   requests: number;
   responses: number;
   isActive: boolean;
+  Role: string;
+  flagCount: number;
+  misuseCount: number;
+
 }
+
+interface MisuseReport {
+  MisuseID: number;
+  ReportType: string;
+  Status: string;
+  InitialDescription: string;
+  Filers: string;
+  FilerCount: number;
+  CreatedAt: string;
+  MisuseStatus: string;
+}
+
+interface Flag {
+  FlagID: number;
+  FlagType: string;
+  Description?: string;
+  CreatedAt?: string;
+  ReporterName?: string;
+  Status: string;
+}
+
+type SortOption = "ID" | "Name" | "Responses" | "Flags" | "Misuses";
 
 const CommunityMemberManagement = () => {
   const router = useRouter();
-  // Removed unused user from useAuth
-  // const { user } = useAuth();
-
+  const { user: currentUser } = useAuth();
+  const pathname = usePathname();
+  
+  // State management
   const [members, setMembers] = useState<CommunityMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [sortBy, setSortBy] = useState<"ID" | "Name" | "Responses">("ID");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  
+  // Modal states
+  const [showSleepModal, setShowSleepModal] = useState(false);
+  const [showMisuseModal, setShowMisuseModal] = useState(false);
+  const [showFlagModal, setShowFlagModal] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<CommunityMember | null>(null);
+  const [selectedMisuses, setSelectedMisuses] = useState<MisuseReport[]>([]);
+  const [selectedFlags, setSelectedFlags] = useState<Flag[]>([]);
+  
+  // Table controls
+  const [sortBy, setSortBy] = useState<SortOption>("ID");
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchQuery, setSearchQuery] = useState("");
-  const itemsPerPage = 5;
+  const itemsPerPage = 8;
 
-  const fetchCommunityMembers = async () => {
-    setLoading(true);
-    setError("");
+  const BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "https://myappapi-yo3p.onrender.com";
+  const isManageUsersPage = pathname === "/ManageUsers";
 
+  // Data fetching
+  const fetchVolunteers = async () => {
     try {
-      const response = await fetch("https://myappapi-yo3p.onrender.com/getCommunityMembers");
+      setLoading(true);
+      setError("");
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to fetch community members");
+      const [volunteersRes, flagRes, misuseRes] = await Promise.all([
+        fetch(`${BASE}/api/volunteers`),
+        fetch(`${BASE}/api/flags/counts`),
+        fetch(`${BASE}/api/misuses/counts`)
+      ]);
+
+      if (!volunteersRes.ok) {
+        throw new Error("Failed to fetch volunteers");
       }
 
-      const data = await response.json();
-      console.log("API response:", data);
+      const volunteersData = await volunteersRes.json();
+      const flagCountsData = flagRes.ok ? await flagRes.json() : {};
+      const misuseCountsData = misuseRes.ok ? await misuseRes.json() : {};
 
-      let membersArray: CommunityMember[] = [];
-      if (data.success && Array.isArray(data.CommunityMembers)) {
-        membersArray = data.CommunityMembers;
-      } else if (Array.isArray(data)) {
-        membersArray = data;
-      } else {
-        throw new Error("Unexpected data format from API");
+      if (!volunteersData.volunteers || !Array.isArray(volunteersData.volunteers)) {
+        throw new Error("Invalid volunteers data format");
       }
 
-      const formattedMembers: CommunityMember[] = membersArray.map((member: CommunityMember) => ({
-        UserID: member.UserID,
-        FullName: member.FullName,
-        Username: member.Username,
-        Email: member.Email,
-        PhoneNumber: member.PhoneNumber,
-        Role: member.Role,
-        DOB: member.DOB,
-        CreatedAt: member.CreatedAt,
-        HomeAddress: member.HomeAddress,
-        requests: 0,
-        responses: 0,
-        isActive: true
-      }));
+      const updatedVolunteers = volunteersData.volunteers.map(
+        (volunteer: CommunityMember) => ({
+          ...volunteer,
+          flagCount: flagCountsData[volunteer.UserID.toString()] || 0,
+          misuseCount: misuseCountsData[volunteer.UserID.toString()] || 0,
+        })
+      );
 
-      setMembers(formattedMembers);
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Error fetching community members");
-      }
+      setMembers(updatedVolunteers);
+    }  catch (err: unknown) {
+                const error = err instanceof Error ? err.message : "Error fetching volunteers:";
+      setError(error || "Failed to load community members");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchCommunityMembers();
-  }, []);
+  // Modal handlers
+  const handleOpenMisuseModal = async (userId: number) => {
+   try {
+    const response = await fetch(`${BASE}/api/misuses/user/${userId}`);
+    if (!response.ok) throw new Error("Failed to fetch misuse details");
+    
+    const data = await response.json();
+    
+    // Transform the API response to match MisuseReport
+    const misuses: MisuseReport[] = data.map((item: {
+      id: number;
+      type?: string;
+      status?: string;
+      description?: string;
+      reporters?: string[];
+      reporter_count?: number;
+      created_at?: string;
+      resolution_status?: string;
+    }) => ({
+      MisuseID: item.id,
+      ReportType: item.type || 'Unknown',
+      Status: item.status || 'Pending',
+      InitialDescription: item.description || 'No description provided',
+      Filers: item.reporters?.join(', ') || 'Anonymous',
+      FilerCount: item.reporter_count || 1,
+      CreatedAt: item.created_at || new Date().toISOString(),
+      MisuseStatus: item.resolution_status || 'Pending'
+    }));
+    
+    setSelectedMisuses(misuses);
+    setShowMisuseModal(true);
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err.message : "Failed to load misuse details";
+    console.error("Error fetching misuses:", error);
+    setError(error);
+  }
+  };
 
-  const filteredMembers = members.filter((member) =>
-    [member.FullName, member.Email, member.Role].some((field) =>
-      field.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  );
+  const handleOpenFlagModal = async (userId: number) => {
+   try {
+    const response = await fetch(`${BASE}/api/flags/user/${userId}`);
+    if (!response.ok) throw new Error("Failed to fetch flag details");
+    
+    const apiFlags = await response.json();
+    
+    // Transform API response to match Flag interface
+    const flags: Flag[] = apiFlags.map((item: {
+      id: number;
+      type?: string;
+      description?: string;
+      created_at?: string;
+      reporter_name?: string;
+      reporter?: { name?: string };
+      status?: string;
+    }) => ({
+      FlagID: item.id,
+      FlagType: item.type || 'General',
+      Description: item.description,
+      CreatedAt: item.created_at,
+      ReporterName: item.reporter_name || item.reporter?.name || 'Anonymous',
+      Status: item.status || 'Pending'
+    }));
+    
+    setSelectedFlags(flags);
+    setShowFlagModal(true);
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err.message : "Failed to load flag details";
+    console.error("Error fetching flags:", error);
+    setError(error);
+  }
+  };
 
-  const sortedMembers = [...filteredMembers].sort((a, b) => {
-    if (sortBy === "Name") return a.FullName.localeCompare(b.FullName);
-    if (sortBy === "Responses") return b.responses - a.responses;
-    return a.UserID - b.UserID;
+  const handleSleepUser = async (userId: number, durationHours: number, sleepType: string) => {
+    try {
+      const response = await fetch(`${BASE}/api/sleep`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ userId, durationHours, sleepType }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to put user to sleep");
+      }
+
+      setMembers(prevMembers =>
+        prevMembers.map(member =>
+          member.UserID === userId ? { ...member, isActive: false } : member
+        )
+      );
+
+      setShowSleepModal(false);
+    } catch (err: unknown) {
+  const error = err instanceof Error ? err.message : "Error putting user to sleep:";
+  setError(error|| "Failed to put user to sleep");
+    
+    }
+  };
+
+  // Utility functions
+  const getStatusIcon = (count: number, type: 'flag' | 'misuse') => {
+    const configs = {
+      flag: {
+        icons: [
+          { icon: "fas fa-shield-alt", color: "#28a745" },
+          { icon: "fas fa-flag", color: "#ffc107" },
+          { icon: "fas fa-exclamation-triangle", color: "#fd7e14" },
+          { icon: "fas fa-ban", color: "#dc3545" }
+        ],
+        thresholds: [0, 2, 5]
+      },
+      misuse: {
+        icons: [
+          { icon: "fas fa-check-circle", color: "#28a745" },
+          { icon: "fas fa-exclamation-circle", color: "#ffc107" },
+          { icon: "fas fa-radiation", color: "#fd7e14" },
+          { icon: "fas fa-skull-crossbones", color: "#dc3545" }
+        ],
+        thresholds: [0, 2, 5]
+      }
+    };
+
+    const config = configs[type];
+    const thresholds = config.thresholds;
+    
+    if (count === thresholds[0]) return config.icons[0];
+    if (count <= thresholds[1]) return config.icons[1];
+    if (count <= thresholds[2]) return config.icons[2];
+    return config.icons[3];
+  };
+
+  // Sorting and pagination
+  const sortedMembers = [...members].sort((a, b) => {
+    switch (sortBy) {
+      case "Name":
+        return a.FullName.localeCompare(b.FullName);
+      case "Responses":
+        return b.responses - a.responses;
+      case "Flags":
+        return b.flagCount - a.flagCount;
+      case "Misuses":
+        return b.misuseCount - a.misuseCount;
+      default:
+        return a.UserID - b.UserID;
+    }
   });
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = sortedMembers.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredMembers.length / itemsPerPage);
+  const totalPages = Math.ceil(members.length / itemsPerPage);
+  const currentItems = sortedMembers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
+  // Effects
+  useEffect(() => {
+    if (isManageUsersPage && currentUser?.UserID) {
+      fetchVolunteers();
+    }
+  }, [currentUser, isManageUsersPage]);
+
+  // Render components
+  const renderStats = () => {
+    const activeMembers = members.filter(m => m.isActive).length;
+    const totalFlags = members.reduce((sum, m) => sum + m.flagCount, 0);
+    const totalMisuses = members.reduce((sum, m) => sum + m.misuseCount, 0);
+
+    return (
+      <div className="d-flex gap-2">
+        <div className="stat-badge">
+          <i className="fas fa-user-check me-1"></i>
+          {activeMembers} Active
+        </div>
+        <div className="stat-badge">
+          <i className="fas fa-flag me-1"></i>
+          {totalFlags} Flags
+        </div>
+        <div className="stat-badge">
+          <i className="fas fa-exclamation-triangle me-1"></i>
+          {totalMisuses} Misuses
+        </div>
+      </div>
+    );
+  };
+
+  const renderSortDropdown = () => (
+    <div className="dropdown">
+      <button
+        className="btn btn-light btn-sm dropdown-toggle"
+        type="button"
+        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+        style={{ minWidth: '120px' }}
+      >
+        <i className="fas fa-sort me-1"></i>
+        Sort by: {sortBy}
+      </button>
+      {isDropdownOpen && (
+        <div className="dropdown-menu show position-absolute">
+          {(["Name", "Responses", "ID", "Flags", "Misuses"] as SortOption[]).map(option => (
+            <button
+              key={option}
+              className="dropdown-item"
+              onClick={() => {
+                setSortBy(option);
+                setIsDropdownOpen(false);
+              }}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderTableRow = (member: CommunityMember, index: number) => {
+    const flagInfo = getStatusIcon(member.flagCount, 'flag');
+    const misuseInfo = getStatusIcon(member.misuseCount, 'misuse');
+
+    return (
+      <tr key={member.UserID} className={index % 2 === 0 ? "table-light" : ""}>
+        <td>
+          <div className="d-flex align-items-center">
+            <div className="avatar me-2">
+              {member.FullName.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <button
+                className="btn btn-link p-0 text-start"
+                onClick={() => router.push(`/User?userID=${member.UserID}`)}
+              >
+                <div className="fw-semibold">{member.FullName}</div>
+                <small className="text-muted">ID: #{member.UserID}</small>
+              </button>
+            </div>
+          </div>
+        </td>
+        <td>
+          <span className="text-muted">{member.Email}</span>
+        </td>
+        <td className="text-center">
+          <span className="badge bg-warning text-dark">{member.requests}</span>
+        </td>
+        <td className="text-center">
+          <span className="badge bg-primary">{member.responses}</span>
+        </td>
+        <td className="text-center">
+          <button
+            className="btn btn-link p-0"
+            onClick={() => handleOpenFlagModal(member.UserID)}
+            disabled={member.flagCount === 0}
+          >
+            <i className={flagInfo.icon} style={{ color: flagInfo.color }}></i>
+            <span className="badge ms-1" style={{ backgroundColor: flagInfo.color }}>
+              {member.flagCount}
+            </span>
+          </button>
+        </td>
+        <td className="text-center">
+          <button
+            className="btn btn-link p-0"
+            onClick={() => handleOpenMisuseModal(member.UserID)}
+            disabled={member.misuseCount === 0}
+          >
+            <i className={misuseInfo.icon} style={{ color: misuseInfo.color }}></i>
+            <span className="badge ms-1" style={{ backgroundColor: misuseInfo.color }}>
+              {member.misuseCount}
+            </span>
+          </button>
+        </td>
+        <td className="text-center">
+          <div className="status-indicator">
+            <span className={`status-dot ${member.isActive ? 'active' : 'inactive'}`}></span>
+            <span className={member.isActive ? 'text-success' : 'text-danger'}>
+              {member.isActive ? 'Active' : 'Inactive'}
+            </span>
+          </div>
+        </td>
+        <td className="text-center">
+          <button
+            className={`btn btn-sm ${member.isActive ? 'btn-outline-danger' : 'btn-outline-secondary'}`}
+            onClick={() => {
+              setSelectedMember(member);
+              setShowSleepModal(true);
+            }}
+            disabled={!member.isActive}
+          >
+            <i className={`fas ${member.isActive ? 'fa-moon' : 'fa-zzz'} me-1`}></i>
+            {member.isActive ? 'Sleep' : 'Sleeping'}
+          </button>
+        </td>
+      </tr>
+    );
+  };
+
+  const renderPagination = () => (
+    <nav className="d-flex justify-content-center">
+      <ul className="pagination">
+        <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+          <button
+            className="page-link"
+            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </button>
+        </li>
+        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+          const page = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+          return (
+            <li key={page} className={`page-item ${currentPage === page ? 'active' : ''}`}>
+              <button
+                className="page-link"
+                onClick={() => setCurrentPage(page)}
+              >
+                {page}
+              </button>
+            </li>
+          );
+        })}
+        <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+          <button
+            className="page-link"
+            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </button>
+        </li>
+      </ul>
+    </nav>
+  );
+
+  // Loading state
   if (loading) {
     return (
-      <div className="container py-12 text-center text-secondary">
-        <div className="spinner-border" role="status" />
-        <p className="mt-3">Loading community members...</p>
+      <div className="container-fluid py-4">
+        <div className="text-center">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-3 text-muted">Loading community members...</p>
+        </div>
       </div>
     );
   }
 
+  // Error state
   if (error) {
     return (
-      <div className="container py-12">
-        <div className="alert alert-danger d-flex align-items-center" role="alert">
+      <div className="container-fluid py-4">
+        <div className="alert alert-danger" role="alert">
           <i className="fas fa-exclamation-circle me-2"></i>
-          <div>{error}</div>
+          {error}
+          <button
+            className="btn btn-outline-danger btn-sm ms-3"
+            onClick={fetchVolunteers}
+          >
+            <i className="fas fa-sync me-1"></i>
+            Retry
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container py-5" style={{ maxWidth: "900px" }}>
-      <h2 className="mb-4 text-center text-primary fw-bold" style={{ letterSpacing: 1.2 }}>
-        Community Member Management
-      </h2>
+    <>
+      <style jsx>{`
+        .stat-badge {
+          background: rgba(255, 255, 255, 0.2);
+          backdrop-filter: blur(10px);
+          padding: 8px 16px;
+          border-radius: 20px;
+          font-size: 0.875rem;
+          font-weight: 600;
+          color: white;
+        }
+        
+        .avatar {
+          width: 40px;
+          height: 40px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-weight: bold;
+          font-size: 1rem;
+        }
+        
+        .status-indicator {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+        }
+        
+        .status-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+        }
+        
+        .status-dot.active {
+          background-color: #28a745;
+          box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.25);
+        }
+        
+        .status-dot.inactive {
+          background-color: #dc3545;
+          box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
+        }
+        
+        .table th {
+          background-color: #f8f9fa;
+          border-bottom: 2px solid #dee2e6;
+          font-weight: 600;
+          color: #495057;
+        }
+        
+        .card {
+          border: none;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .card-header {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border-bottom: none;
+        }
+      `}</style>
 
-      <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-        <div className="dropdown">
-          <button
-            className="btn btn-outline-primary btn-sm dropdown-toggle"
-            type="button"
-            data-bs-toggle="dropdown"
-            aria-expanded="false"
-          >
-            Export data
-          </button>
-          <ul className="dropdown-menu shadow-sm">
-            <li><a className="dropdown-item" href="#">CSV</a></li>
-            <li><a className="dropdown-item" href="#">Excel</a></li>
-          </ul>
-        </div>
-
-        <div className="dropdown">
-          <button
-            className="btn btn-outline-secondary btn-sm dropdown-toggle"
-            type="button"
-            data-bs-toggle="dropdown"
-            aria-expanded="false"
-          >
-            Sort by: <span className="text-primary fw-semibold">{sortBy}</span>
-          </button>
-          <ul className="dropdown-menu shadow-sm">
-            <li><button className="dropdown-item" onClick={() => setSortBy("Name")}>Name</button></li>
-            <li><button className="dropdown-item" onClick={() => setSortBy("Responses")}>Responses</button></li>
-            <li><button className="dropdown-item" onClick={() => setSortBy("ID")}>ID</button></li>
-          </ul>
-        </div>
-
-        <div className="input-group w-100 w-md-50">
-          <input
-            type="text"
-            className="form-control form-control-sm"
-            placeholder="Search by name, email, or role..."
-            value={searchQuery}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-          />
-          {searchQuery && (
-            <button
-              className="btn btn-outline-secondary btn-sm"
-              onClick={() => setSearchQuery("")}
-              title="Clear search"
-            >
-              ✕
-            </button>
-          )}
-        </div>
-      </div>
-
-      {currentItems.length === 0 ? (
-        <div className="text-center text-muted py-5 border rounded-3">
-          No community members found.
-        </div>
-      ) : (
-        <div className="list-group shadow-sm rounded-3">
-          {currentItems.map(member => (
-            <div
-              key={member.UserID}
-              className="list-group-item list-group-item-action d-flex flex-column flex-md-row justify-content-between align-items-center gap-3"
-              style={{ backgroundColor: "#f9fafd", borderRadius: 8 }}
-            >
-              <div className="d-flex flex-column flex-grow-1">
-                <a
-                  href={`/profile/${member.UserID}`}
-                  className="text-decoration-none fw-semibold fs-5 text-primary mb-1"
-                  onClick={e => {
-                    e.preventDefault();
-                    router.push(`/User?userID=${member.UserID}`);
-                  }}
-                >
-                  {member.FullName}
-                </a>
-                <div className="text-muted small">
-                  @{member.Username} • {member.Role}
-                </div>
-                <div className="text-muted small mt-1">
-                  📧 {member.Email} | 📞 {member.PhoneNumber}
-                </div>
-                <div className="text-muted small mt-1">
-                  🏠 {member.HomeAddress}
-                </div>
-                <div className="text-muted small mt-1">
-                  🎂 DOB: {new Date(member.DOB).toLocaleDateString()} | Joined: {new Date(member.CreatedAt).toLocaleDateString()}
-                </div>
+      <div className="container-fluid py-4">
+        <div className="card">
+          <div className="card-header text-white py-4">
+            <div className="d-flex justify-content-between align-items-center">
+              <div>
+                <h3 className="mb-1">
+                  <i className="fas fa-users me-2"></i>
+                  Community Management
+                </h3>
+                <p className="mb-0 opacity-75">Manage and monitor community members</p>
               </div>
-              <div className="d-flex flex-column align-items-center">
-                <span
-                  title={member.isActive ? "Active" : "Inactive"}
-                  className={`badge rounded-circle mb-3`}
-                  style={{
-                    width: 16,
-                    height: 16,
-                    backgroundColor: member.isActive ? "#28a745" : "#dc3545",
-                    boxShadow: "0 0 6px rgba(0,0,0,0.1)"
-                  }}
-                />
-                {/* Removed Sleep button */}
+              
+              <div className="d-flex gap-3 align-items-center">
+                {renderStats()}
+                {renderSortDropdown()}
               </div>
             </div>
-          ))}
+          </div>
+
+          <div className="card-body p-0">
+            <div className="table-responsive">
+              <table className="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>Member</th>
+                    <th>Email</th>
+                    <th className="text-center">Requests</th>
+                    <th className="text-center">Responses</th>
+                    <th className="text-center">Flags</th>
+                    <th className="text-center">Misuses</th>
+                    <th className="text-center">Status</th>
+                    <th className="text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentItems.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="text-center py-5">
+                        <i className="fas fa-users fs-1 text-muted opacity-50"></i>
+                        <p className="mt-3 text-muted">No members found</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    currentItems.map((member, index) => renderTableRow(member, index))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="card-footer bg-light py-3">
+            {renderPagination()}
+            <div className="text-center mt-3 text-muted small">
+              Page {currentPage} of {totalPages} • {members.length} total members
+            </div>
+          </div>
         </div>
-      )}
 
-      <nav aria-label="Page navigation" className="mt-4 d-flex justify-content-center">
-        <ul className="pagination pagination-sm">
-          <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
-            <button
-              className="page-link"
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              aria-label="Previous"
-            >
-              &laquo;
-            </button>
-          </li>
+        {/* Modals */}
+        {showSleepModal && selectedMember && (
+          <SleepModal
+            member={selectedMember}
+            onClose={() => setShowSleepModal(false)}
+            onSleep={(duration, sleepType) => 
+              handleSleepUser(selectedMember.UserID, duration, sleepType)
+            }
+          />
+        )}
 
-          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-            const page = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
-            return (
-              <li key={page} className={`page-item ${currentPage === page ? "active" : ""}`}>
-                <button className="page-link" onClick={() => setCurrentPage(page)}>
-                  {page}
-                </button>
-              </li>
-            );
-          })}
+        {showMisuseModal && (
+          <MisuseDetailsModal
+            misuses={selectedMisuses}
+            onClose={() => setShowMisuseModal(false)}
+          />
+        )}
 
-          {totalPages > 5 && currentPage < totalPages - 2 && (
-            <li className="page-item disabled">
-              <span className="page-link">…</span>
-            </li>
-          )}
-
-          {totalPages > 5 && (
-            <li className={`page-item ${currentPage === totalPages ? "active" : ""}`}>
-              <button className="page-link" onClick={() => setCurrentPage(totalPages)}>
-                {totalPages}
-              </button>
-            </li>
-          )}
-
-          <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
-            <button
-              className="page-link"
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              aria-label="Next"
-            >
-              &raquo;
-            </button>
-          </li>
-        </ul>
-      </nav>
-    </div>
+        {showFlagModal && (
+          <FlagDetailsModal
+            flags={selectedFlags}
+            onClose={() => setShowFlagModal(false)}
+          />
+        )}
+      </div>
+    </>
   );
 };
 
