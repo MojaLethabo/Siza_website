@@ -40,10 +40,10 @@ const NotificationTypeIcon = ({ type }: { type: NotificationType }) => {
   };
 
   const colorMap = {
-    info: "text-blue-500",
-    warning: "text-yellow-500",
-    alert: "text-red-500",
-    system: "text-purple-500",
+    info: "text-primary",
+    warning: "text-warning",
+    alert: "text-danger",
+    system: "text-secondary",
   };
 
   return (
@@ -207,31 +207,12 @@ export default function NotificationsClient() {
 
   if (loading) {
     return (
-      <div className="page-inner">
-        <div
-          className="d-flex justify-content-center align-items-center"
-          style={{
-            minHeight: "400px",
-            background: "linear-gradient(135deg, #ff0000 0%, #764ba2 100%)",
-            borderRadius: "12px",
-            color: "white",
-          }}
-        >
-          <div className="text-center">
-            <div
-              className="spinner-border mb-3"
-              role="status"
-              style={{
-                width: "3rem",
-                height: "3rem",
-                borderColor: "rgba(255,255,255,0.3)",
-                borderTopColor: "white",
-              }}
-            >
-              <span className="visually-hidden">Loading...</span>
-            </div>
-            <h5 className="fw-light">Loading community members...</h5>
+      <div className="container-fluid py-4">
+        <div className="text-center">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
           </div>
+          <p className="mt-3 text-muted">Loading notifications...</p>
         </div>
       </div>
     );
@@ -239,20 +220,16 @@ export default function NotificationsClient() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8 flex items-center justify-center">
-        <div className="bg-white rounded-xl shadow-md p-8 max-w-md text-center">
-          <div className="text-red-500 text-4xl mb-4">
-            <FontAwesomeIcon icon={faExclamationCircle} />
-          </div>
-          <h2 className="text-xl font-semibold mb-2">
-            Error Loading Notifications
-          </h2>
-          <p className="text-gray-600 mb-6">{error}</p>
+      <div className="container-fluid py-4">
+        <div className="alert alert-danger" role="alert">
+          <i className="fas fa-exclamation-circle me-2"></i>
+          {error}
           <button
+            className="btn btn-outline-danger btn-sm ms-3"
             onClick={fetchNotifications}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
           >
-            Try Again
+            <i className="fas fa-sync me-1"></i>
+            Retry
           </button>
         </div>
       </div>
@@ -260,47 +237,114 @@ export default function NotificationsClient() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        <div className="bg-white rounded-xl shadow-md overflow-hidden">
-          {/* Header */}
-          <div
-            className="px-6 py-6"
-            style={{
-              background: "linear-gradient(135deg, #ff0000 0%, #764ba2 100%)",
-            }}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <FontAwesomeIcon
-                  icon={faBell}
-                  className="text-white text-2xl mr-3"
-                />
-                <h1 className="text-2xl font-bold text-white">Notifications</h1>
+    <>
+      <style jsx>{`
+        .stat-badge {
+          background: rgba(255, 255, 255, 0.2);
+          backdrop-filter: blur(10px);
+          padding: 8px 16px;
+          border-radius: 20px;
+          font-size: 0.875rem;
+          font-weight: 600;
+          color: white;
+        }
+        
+        .avatar {
+          width: 40px;
+          height: 40px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-weight: bold;
+          font-size: 1rem;
+        }
+        
+        .card {
+          border: none;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .card-header {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border-bottom: none;
+        }
+        
+        .dropdown-menu {
+          border: none;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+          border-radius: 8px;
+          padding: 0.5rem;
+        }
+
+        .dropdown-item {
+          border-radius: 4px;
+          padding: 0.5rem 1rem;
+          font-size: 0.875rem;
+          transition: all 0.2s;
+        }
+
+        .dropdown-item:hover {
+          background-color: #f8f9fa;
+          color: #495057;
+        }
+
+        .dropdown-toggle::after {
+          margin-left: 0.5rem;
+        }
+
+        .unread-dot {
+          display: inline-block;
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background-color: #28a745;
+          margin-left: 8px;
+        }
+      `}</style>
+
+      <div className="container-fluid py-4">
+        <div className="card">
+          <div className="card-header text-white py-4">
+            <div className="d-flex justify-content-between align-items-center">
+              <div>
+                <h3 className="mb-1">
+                  <i className="fas fa-bell me-2"></i>
+                  Notifications
+                </h3>
+                <p className="mb-0 opacity-75">
+                  Manage and monitor your notification center
+                </p>
               </div>
-              <span className="bg-red-500 bg-opacity-20 text-white px-3 py-1 rounded-full text-sm">
-                {unreadCount} unread
-              </span>
+              
+              <div className="d-flex gap-3 align-items-center">
+                <div className="stat-badge">
+                  <i className="fas fa-envelope me-1"></i>
+                  {notifications.length} Total
+                </div>
+                <div className="stat-badge">
+                  <i className="fas fa-eye-slash me-1"></i>
+                  {unreadCount} Unread
+                </div>
+              </div>
             </div>
 
-            <div className="mt-4 flex flex-wrap gap-3">
-              <div className="relative">
+            <div className="d-flex gap-3 mt-4">
+              <div className="dropdown">
                 <button
-                  className="flex items-center bg-purple-500 bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition"
+                  className="btn btn-light btn-sm dropdown-toggle"
+                  type="button"
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                 >
-                  <FontAwesomeIcon icon={faSort} className="mr-2" />
+                  <i className="fas fa-sort me-1"></i>
                   Sort: {sortOrder === "newest" ? "Newest" : "Oldest"}
                 </button>
-
                 {dropdownOpen && (
-                  <div className="absolute z-10 mt-1 w-48 bg-white rounded-md shadow-lg overflow-hidden">
+                  <div className={`dropdown-menu ${dropdownOpen ? 'show' : ''}`}>
                     <button
-                      className={`block w-full text-left px-4 py-2 text-sm ${
-                        sortOrder === "newest"
-                          ? "bg-indigo-100 text-indigo-700"
-                          : "hover:bg-gray-100"
-                      }`}
+                      className={`dropdown-item ${sortOrder === "newest" ? 'active' : ''}`}
                       onClick={() => {
                         setSortOrder("newest");
                         setDropdownOpen(false);
@@ -309,11 +353,7 @@ export default function NotificationsClient() {
                       Newest first
                     </button>
                     <button
-                      className={`block w-full text-left px-4 py-2 text-sm ${
-                        sortOrder === "oldest"
-                          ? "bg-indigo-100 text-indigo-700"
-                          : "hover:bg-gray-100"
-                      }`}
+                      className={`dropdown-item ${sortOrder === "oldest" ? 'active' : ''}`}
                       onClick={() => {
                         setSortOrder("oldest");
                         setDropdownOpen(false);
@@ -325,26 +365,19 @@ export default function NotificationsClient() {
                 )}
               </div>
 
-              <div className="relative">
+              <div className="dropdown">
                 <button
-                  className="flex items-center bg-purple-500 bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition"
+                  className="btn btn-light btn-sm dropdown-toggle"
+                  type="button"
                   onClick={() => setFilterOpen(!filterOpen)}
                 >
-                  <FontAwesomeIcon icon={faFilter} className="mr-2" />
-                  Filter:{" "}
-                  {filter === "all"
-                    ? "All"
-                    : filter.charAt(0).toUpperCase() + filter.slice(1)}
+                  <i className="fas fa-filter me-1"></i>
+                  Filter: {filter === "all" ? "All" : filter.charAt(0).toUpperCase() + filter.slice(1)}
                 </button>
-
                 {filterOpen && (
-                  <div className="absolute z-10 mt-1 w-48 bg-white rounded-md shadow-lg overflow-hidden">
+                  <div className={`dropdown-menu ${filterOpen ? 'show' : ''}`}>
                     <button
-                      className={`block w-full text-left px-4 py-2 text-sm ${
-                        filter === "all"
-                          ? "bg-indigo-100 text-indigo-700"
-                          : "hover:bg-gray-100"
-                      }`}
+                      className={`dropdown-item ${filter === "all" ? 'active' : ''}`}
                       onClick={() => {
                         setFilter("all");
                         setFilterOpen(false);
@@ -353,11 +386,7 @@ export default function NotificationsClient() {
                       All notifications
                     </button>
                     <button
-                      className={`block w-full text-left px-4 py-2 text-sm ${
-                        filter === "info"
-                          ? "bg-indigo-100 text-indigo-700"
-                          : "hover:bg-gray-100"
-                      }`}
+                      className={`dropdown-item ${filter === "info" ? 'active' : ''}`}
                       onClick={() => {
                         setFilter("info");
                         setFilterOpen(false);
@@ -366,11 +395,7 @@ export default function NotificationsClient() {
                       Information
                     </button>
                     <button
-                      className={`block w-full text-left px-4 py-2 text-sm ${
-                        filter === "warning"
-                          ? "bg-indigo-100 text-indigo-700"
-                          : "hover:bg-gray-100"
-                      }`}
+                      className={`dropdown-item ${filter === "warning" ? 'active' : ''}`}
                       onClick={() => {
                         setFilter("warning");
                         setFilterOpen(false);
@@ -379,11 +404,7 @@ export default function NotificationsClient() {
                       Warnings
                     </button>
                     <button
-                      className={`block w-full text-left px-4 py-2 text-sm ${
-                        filter === "alert"
-                          ? "bg-indigo-100 text-indigo-700"
-                          : "hover:bg-gray-100"
-                      }`}
+                      className={`dropdown-item ${filter === "alert" ? 'active' : ''}`}
                       onClick={() => {
                         setFilter("alert");
                         setFilterOpen(false);
@@ -392,11 +413,7 @@ export default function NotificationsClient() {
                       Alerts
                     </button>
                     <button
-                      className={`block w-full text-left px-4 py-2 text-sm ${
-                        filter === "system"
-                          ? "bg-indigo-100 text-indigo-700"
-                          : "hover:bg-gray-100"
-                      }`}
+                      className={`dropdown-item ${filter === "system" ? 'active' : ''}`}
                       onClick={() => {
                         setFilter("system");
                         setFilterOpen(false);
@@ -409,87 +426,71 @@ export default function NotificationsClient() {
               </div>
 
               <button
-                className="flex items-center bg-purple-500 bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition"
+                className="btn btn-light btn-sm"
                 onClick={markAllAsRead}
                 disabled={unreadCount === 0}
               >
-                <FontAwesomeIcon icon={faCheck} className="mr-2" />
+                <i className="fas fa-check me-1"></i>
                 Mark all as read
               </button>
             </div>
           </div>
 
-          {/* Notification list */}
-          <div className="divide-y">
-            {sorted.length === 0 ? (
-              <div className="py-12 text-center">
-                <div className="text-gray-400 mb-4">
-                  <FontAwesomeIcon icon={faBell} size="3x" />
+          <div className="card-body p-0">
+            <div className="list-group list-group-flush">
+              {sorted.length === 0 ? (
+                <div className="text-center py-5">
+                  <i className="fas fa-bell fs-1 text-muted opacity-50"></i>
+                  <p className="mt-3 text-muted">No notifications found</p>
+                  <small className="text-muted">Try changing your filter settings</small>
                 </div>
-                <p className="text-gray-500">No notifications found</p>
-                <p className="text-gray-400 text-sm mt-2">
-                  Try changing your filter settings
-                </p>
-              </div>
-            ) : (
-              sorted.map((n) => (
+              ) : (
+                sorted.map((n) => (
                 <div
-                  key={n.NotificationID}
-                  className={`p-5 hover:bg-gray-50 transition ${
-                    !n.IsRead ? "bg-blue-50" : ""
-                  }`}
-                >
-                  <div className="flex">
-                    <div className="mr-4 mt-1">
-                      <NotificationTypeIcon
-                        type={mapNotificationType(n.NotificationType)}
-                      />
-                    </div>
-
-                    <div className="flex-1">
-                      <div className="flex justify-between">
-                        <h3 className="font-medium text-gray-900">
-                          {n.Title}
-                          {!n.IsRead && (
-                            <span className="ml-2 inline-block h-2 w-2 rounded-full bg-blue-500"></span>
-                          )}
-                        </h3>
-                        <div className="text-sm text-gray-500">
-                          {format(
-                            new Date(n.CreatedAt),
-                            "MMM d, yyyy 'at' h:mm a"
-                          )}
-                        </div>
-                      </div>
-
-                      <p className="mt-1 text-gray-600 text-sm line-clamp-2">
-                        {n.Message}
-                      </p>
-
-                      <div className="mt-3 flex space-x-3">
-                        <button
-                          className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
-                          onClick={() => setActive(n)}
-                        >
-                          <FontAwesomeIcon icon={faEye} className="mr-1" />
-                          View details
-                        </button>
-
-                        {!n.IsRead && (
-                          <button
-                            className="text-sm font-medium text-gray-500 hover:text-gray-700"
-                            onClick={() => markAsRead(n.NotificationID)}
-                          >
-                            <FontAwesomeIcon icon={faCheck} className="mr-1" />
-                            Mark as read
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
+  key={n.NotificationID}
+  className={`list-group-item ${!n.IsRead ? 'bg-light' : ''}`}
+>
+  <div className="d-flex align-items-start">
+    <div className="me-3">
+      <NotificationTypeIcon
+        type={mapNotificationType(n.NotificationType)}
+      />
+    </div>
+    <div className="flex-grow-1">
+      <div className="d-flex justify-content-between align-items-start">
+        <h5 className="mb-1">
+          {n.Title}
+          {!n.IsRead && <span className="unread-dot"></span>}
+        </h5>
+        <small className="text-muted ms-3" style={{ whiteSpace: 'nowrap' }}>
+          {format(new Date(n.CreatedAt), "MMM d, yyyy 'at' h:mm a")}
+        </small>
+      </div>
+      <p className="mb-1 text-muted">{n.Message}</p>
+      <div className="d-flex gap-3 mt-2">
+        <button
+          className="btn btn-link p-0 text-primary"
+          onClick={() => setActive(n)}
+        >
+          <i className="fas fa-eye me-1"></i>
+          View details
+        </button>
+        {!n.IsRead && (
+          <button
+            className="btn btn-link p-0 text-success"
+            onClick={() => markAsRead(n.NotificationID)}
+          >
+            <i className="fas fa-check me-1"></i>
+            Mark as read
+          </button>
+        )}
+      </div>
+    </div>
+  </div>
+</div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -497,80 +498,55 @@ export default function NotificationsClient() {
       {/* Notification Detail Modal */}
       {active && (
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-          style={{
-            background: "rgba(0, 0, 0, 0.6)",
-            backdropFilter: "blur(8px)",
-          }}
+          className="modal fade show"
+          style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}
+          onClick={() => setActive(null)}
         >
-          <div
-            className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              className=" px-6 py-4"
-              style={{
-                background: "linear-gradient(135deg, #ff0000 0%, #764ba2 100%)",
-              }}
-            >
-              <div className="flex justify-between items-center">
-                <div className="flex items-center">
+          <div className="modal-dialog modal-dialog-centered" onClick={e => e.stopPropagation()}>
+            <div className="modal-content">
+              <div className="modal-header text-white" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+                <div className="d-flex align-items-center">
                   <NotificationTypeIcon
                     type={mapNotificationType(active.NotificationType)}
                   />
-                  <h3 className="ml-3 text-lg font-semibold text-white">
-                    {active.Title}
-                  </h3>
+                  <h5 className="modal-title ms-2">{active.Title}</h5>
                 </div>
                 <button
+                  type="button"
+                  className="btn-close btn-close-white"
                   onClick={() => setActive(null)}
-                  className="text-white hover:text-gray-200"
-                >
-                  <FontAwesomeIcon icon={faTimes} />
-                </button>
+                ></button>
               </div>
-            </div>
-
-            <div className="p-6">
-              <p className="text-gray-700 mb-6">{active.Message}</p>
-
-              <div className="flex justify-between items-center">
-                <div className="text-sm text-gray-500">
-                  {format(
-                    new Date(active.CreatedAt),
-                    "MMM d, yyyy 'at' h:mm a"
-                  )}
-                </div>
-
-                <div className="flex space-x-3">
-                  {!active.IsRead && (
-                    <button
-                      className="text-sm text-indigo-600 hover:text-indigo-800"
-                      onClick={() => {
-                        markAsRead(active.NotificationID);
-                        setActive(null);
-                      }}
-                    >
-                      <FontAwesomeIcon icon={faCheck} className="mr-1" />
-                      Mark as read
-                    </button>
-                  )}
+              <div className="modal-body">
+                <p>{active.Message}</p>
+                <small className="text-muted">
+                  {format(new Date(active.CreatedAt), "MMM d, yyyy 'at' h:mm a")}
+                </small>
+              </div>
+              <div className="modal-footer">
+                {!active.IsRead && (
                   <button
-                    className="px-4 py-2 text-white rounded-lg hover:bg-indigo-700 transition"
-                    style={{
-                      background:
-                        "linear-gradient(135deg, #ff0000 0%, #764ba2 100%)",
+                    className="btn btn-success"
+                    onClick={() => {
+                      markAsRead(active.NotificationID);
+                      setActive(null);
                     }}
-                    onClick={() => setActive(null)}
                   >
-                    Close
+                    <i className="fas fa-check me-1"></i>
+                    Mark as read
                   </button>
-                </div>
+                )}
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setActive(null)}
+                >
+                  Close
+                </button>
               </div>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
