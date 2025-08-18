@@ -1,10 +1,15 @@
-import { Suspense } from "react";
-import UserProfilePage from "@/app/User/UserProfilePage";
+"use client";
 
-export default function Page() {   // Rename this function to 'Page' or 'UserPage'
-  return (
-    <Suspense fallback={<div className="p-6">Loading user...</div>}>
-      <UserProfilePage />
-    </Suspense>
-  );
+import dynamic from "next/dynamic";
+
+const UserProfilePage = dynamic(
+  () => import("@/app/User/UserProfilePage"),
+  {
+    ssr: false,
+    loading: () => <div className="p-6">Loading user...</div>,
+  }
+);
+
+export default function Page() {
+  return <UserProfilePage />;
 }

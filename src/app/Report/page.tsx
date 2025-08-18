@@ -87,7 +87,6 @@ async function getAddressFromCoords(
   }
 }
 
-
 interface Report {
   ReportID: number;
   EmergencyType: string;
@@ -126,13 +125,11 @@ function AudioPlayer({ base64String, index }: { base64String: string; index: num
 
     const handleAudioProcessing = async () => {
       try {
-        // Clean base64 string
         const cleanBase64 = base64String.replace(
           /^data:audio\/\w+;base64,/,
           ""
         );
 
-        // Convert to Blob
         const byteCharacters = atob(cleanBase64);
         const byteNumbers = new Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
@@ -177,10 +174,14 @@ function AudioPlayer({ base64String, index }: { base64String: string; index: num
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-500"></div>
-          <p className="text-slate-600 text-sm">Processing audio...</p>
+      <div className="card border-light">
+        <div className="card-body">
+          <div className="d-flex align-items-center gap-3">
+            <div className="spinner-border spinner-border-sm text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <p className="text-muted mb-0">Processing audio...</p>
+          </div>
         </div>
       </div>
     );
@@ -188,56 +189,50 @@ function AudioPlayer({ base64String, index }: { base64String: string; index: num
 
   if (error) {
     return (
-      <div className="bg-white rounded-lg border border-red-200 p-4 shadow-sm">
-        <p className="text-red-600 text-sm">{error}</p>
+      <div className="card border-danger">
+        <div className="card-body">
+          <p className="text-danger mb-0">{error}</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-purple-100 rounded-full">
-            <Mic className="w-4 h-4 text-purple-600" />
+    <div className="card border-light">
+      <div className="card-body">
+        <div className="d-flex justify-content-between align-items-center">
+          <div className="d-flex align-items-center gap-3">
+            <div className="avatar-sm bg-primary bg-opacity-10 d-flex align-items-center justify-content-center rounded">
+              <i className="fas fa-microphone text-primary"></i>
+            </div>
+            <div>
+              <h6 className="fw-semibold mb-1">Voice Recording {index + 1}</h6>
+              <small className="text-muted">Emergency audio evidence</small>
+            </div>
           </div>
-          <div>
-            <p className="font-medium text-slate-900">Voice Recording {index + 1}</p>
-            <p className="text-sm text-slate-500">Emergency audio evidence</p>
-          </div>
+          <button
+            onClick={isPlaying ? handlePause : handlePlay}
+            className={`btn btn-sm ${
+              isPlaying 
+                ? 'btn-danger' 
+                : 'btn-primary'
+            }`}
+            disabled={!localAudioUrl}
+          >
+            <i className={`fas ${isPlaying ? 'fa-pause' : 'fa-play'} me-1`}></i>
+            {isPlaying ? 'Pause' : 'Play'}
+          </button>
         </div>
-        <button
-          onClick={isPlaying ? handlePause : handlePlay}
-          className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${
-            isPlaying 
-              ? 'bg-red-600 hover:bg-red-700 text-white' 
-              : 'bg-purple-600 hover:bg-purple-700 text-white'
-          }`}
-          disabled={!localAudioUrl}
-        >
-          {isPlaying ? (
-            <>
-              <div className="w-2 h-4 bg-white rounded-sm"></div>
-              <div className="w-2 h-4 bg-white rounded-sm"></div>
-              <span className="text-sm font-medium">Pause</span>
-            </>
-          ) : (
-            <>
-              <div className="w-0 h-0 border-l-4 border-l-white border-y-2 border-y-transparent"></div>
-              <span className="text-sm font-medium">Play</span>
-            </>
-          )}
-        </button>
+        {localAudioUrl && (
+          <audio
+            ref={audioRef}
+            src={localAudioUrl}
+            onEnded={() => setIsPlaying(false)}
+            className="w-100 mt-3"
+            controls
+          />
+        )}
       </div>
-      {localAudioUrl && (
-        <audio
-          ref={audioRef}
-          src={localAudioUrl}
-          onEnded={() => setIsPlaying(false)}
-          className="w-full mt-3"
-          controls
-        />
-      )}
     </div>
   );
 }
@@ -300,38 +295,40 @@ function LocationDisplay({ location }: { location: string }) {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-start gap-3">
-        <div className="p-2 bg-red-100 rounded-full flex-shrink-0">
-          <MapPin className="w-5 h-5 text-red-600" />
+    <div>
+      <div className="d-flex gap-3 mb-3">
+        <div className="avatar-sm bg-danger bg-opacity-10 d-flex align-items-center justify-content-center rounded flex-shrink-0">
+          <i className="fas fa-map-marker-alt text-danger"></i>
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="flex-grow-1">
           {isLoading ? (
-            <div className="flex items-center gap-2">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-              <span className="text-slate-600">Resolving address...</span>
+            <div className="d-flex align-items-center gap-2">
+              <div className="spinner-border spinner-border-sm text-primary" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
+              <span className="text-muted">Resolving address...</span>
             </div>
           ) : error ? (
             <div>
-              <p className="text-red-600 text-sm mb-1">{error}</p>
-              <p className="text-slate-500 text-sm">Raw coordinates: {location}</p>
+              <p className="text-danger mb-1">{error}</p>
+              <p className="text-muted small mb-0">Raw coordinates: {location}</p>
             </div>
           ) : resolvedAddress ? (
             <div>
-              <p className="text-slate-900 font-medium leading-relaxed">{resolvedAddress}</p>
+              <p className="fw-medium mb-1">{resolvedAddress}</p>
             </div>
           ) : (
-            <p className="text-slate-600">No address available</p>
+            <p className="text-muted mb-0">No address available</p>
           )}
-          <p className="text-slate-500 text-sm mt-1">Coordinates: {location}</p>
+          <p className="text-muted small mb-0">Coordinates: {location}</p>
         </div>
       </div>
       {coordinates && (
         <button
           onClick={openInMaps}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-sm shadow-sm"
+          className="btn btn-primary btn-sm"
         >
-          <ExternalLink className="w-4 h-4" />
+          <i className="fas fa-external-link-alt me-1"></i>
           View on Google Maps
         </button>
       )}
@@ -385,10 +382,12 @@ function ReportContent() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
-          <p className="text-slate-600 font-medium">Loading emergency report...</p>
+      <div className="container-fluid py-4">
+        <div className="text-center">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-3 text-muted">Loading emergency report...</p>
         </div>
       </div>
     );
@@ -396,13 +395,10 @@ function ReportContent() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="max-w-md p-6 bg-red-50 rounded-xl border border-red-200 text-center">
-          <AlertTriangle className="w-10 h-10 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-red-700 mb-2">
-            Error Loading Report
-          </h2>
-          <p className="text-red-600">{error}</p>
+      <div className="container-fluid py-4">
+        <div className="alert alert-danger" role="alert">
+          <i className="fas fa-exclamation-triangle me-2"></i>
+          {error}
         </div>
       </div>
     );
@@ -410,15 +406,10 @@ function ReportContent() {
 
   if (!report || !reporter) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="max-w-md p-6 bg-slate-50 rounded-xl border border-slate-200 text-center">
-          <AlertTriangle className="w-10 h-10 text-slate-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-slate-700 mb-2">
-            No Data Found
-          </h2>
-          <p className="text-slate-600">
-            The requested emergency report could not be found.
-          </p>
+      <div className="container-fluid py-4">
+        <div className="alert alert-warning" role="alert">
+          <i className="fas fa-exclamation-triangle me-2"></i>
+          The requested emergency report could not be found.
         </div>
       </div>
     );
@@ -426,169 +417,224 @@ function ReportContent() {
 
   const statusConfig = {
     Pending: {
-      color: "text-amber-800",
-      bgColor: "bg-amber-50",
-      borderColor: "border-amber-200",
-      icon: <AlertTriangle className="w-4 h-4" />,
+      color: "text-warning",
+      bgColor: "bg-warning",
+      icon: "fas fa-clock",
     },
     "In Progress": {
-      color: "text-blue-800",
-      bgColor: "bg-blue-50",
-      borderColor: "border-blue-200",
-      icon: <Clock className="w-4 h-4" />,
+      color: "text-info",
+      bgColor: "bg-info",
+      icon: "fas fa-spinner fa-spin",
     },
     Resolved: {
-      color: "text-emerald-800",
-      bgColor: "bg-emerald-50",
-      borderColor: "border-emerald-200",
-      icon: <CheckCircle2 className="w-4 h-4" />,
+      color: "text-success",
+      bgColor: "bg-success",
+      icon: "fas fa-check-circle",
     },
   };
 
   const emergencyTypeConfig = {
-    Fire: { color: "text-red-600", bgColor: "bg-red-50", icon: "🔥", urgency: "Critical" },
-    Accident: { color: "text-orange-600", bgColor: "bg-orange-50", icon: "🚗", urgency: "High" },
-    Medical: { color: "text-pink-600", bgColor: "bg-pink-50", icon: "🏥", urgency: "Critical" },
-    Theft: { color: "text-purple-600", bgColor: "bg-purple-50", icon: "🚨", urgency: "Medium" },
-    Other: { color: "text-slate-600", bgColor: "bg-slate-50", icon: "⚠️", urgency: "Low" },
+    Fire: { color: "text-danger", bgColor: "bg-danger", icon: "🔥", urgency: "Critical" },
+    Accident: { color: "text-warning", bgColor: "bg-warning", icon: "🚗", urgency: "High" },
+    Medical: { color: "text-danger", bgColor: "bg-danger", icon: "🏥", urgency: "Critical" },
+    Theft: { color: "text-primary", bgColor: "bg-primary", icon: "🚨", urgency: "Medium" },
+    Other: { color: "text-secondary", bgColor: "bg-secondary", icon: "⚠️", urgency: "Low" },
   };
 
   const status = report.Report_Status;
   const emergencyConfig = emergencyTypeConfig[report.EmergencyType as keyof typeof emergencyTypeConfig] || emergencyTypeConfig.Other;
   const createdAt = report.Report_CreatedAt || new Date().toISOString();
-  const timeAgo = Math.floor((Date.now() - new Date(createdAt).getTime()) / (1000 * 60));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100">
-      <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+    <>
+      <style jsx>{`
+        .stat-badge {
+          background: rgba(255, 255, 255, 0.2);
+          backdrop-filter: blur(10px);
+          padding: 8px 16px;
+          border-radius: 20px;
+          font-size: 0.875rem;
+          font-weight: 600;
+          color: white;
+        }
         
+        .avatar {
+          width: 40px;
+          height: 40px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-weight: bold;
+          font-size: 1rem;
+        }
+        
+        .avatar-sm {
+          width: 32px;
+          height: 32px;
+        }
+        
+        .avatar-lg {
+          width: 64px;
+          height: 64px;
+          font-size: 1.5rem;
+        }
+        
+        .card {
+          border: none;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .card-header {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border-bottom: none;
+        }
+        
+        .emergency-type-card {
+          border-left: 4px solid;
+          padding: 1rem;
+          border-radius: 0.375rem;
+        }
+        
+        .timeline-item {
+          position: relative;
+          padding-left: 2rem;
+        }
+        
+        .timeline-item::before {
+          content: '';
+          position: absolute;
+          left: 0.5rem;
+          top: 0.75rem;
+          width: 0.5rem;
+          height: 0.5rem;
+          border-radius: 50%;
+          background: currentColor;
+        }
+        
+        .timeline-item:not(:last-child)::after {
+          content: '';
+          position: absolute;
+          left: 0.75rem;
+          top: 1.5rem;
+          bottom: -1rem;
+          width: 1px;
+          background: #dee2e6;
+        }
+      `}</style>
+
+      <div className="container-fluid py-4">
         {/* Header Section */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-3 mb-4 px-4 py-2 bg-white rounded-full shadow-sm border border-slate-200">
-            <Shield className="w-5 h-5 text-blue-600" />
-            <span className="text-sm font-medium text-slate-700">Emergency Response System</span>
+        <div className="text-center mb-4">
+          <div className="d-inline-flex align-items-center gap-2 bg-white px-3 py-2 rounded-pill shadow-sm border mb-3">
+            <i className="fas fa-shield-alt text-primary"></i>
+            <span className="small fw-medium text-muted">Emergency Response System</span>
           </div>
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">
-            Emergency Report #{report.ReportID}
-          </h1>
-          <p className="text-slate-600 max-w-2xl mx-auto">
-            Detailed information and evidence for the reported emergency situation
-          </p>
+          <h1 className="h2 fw-bold text-dark mb-2">Emergency Report #{report.ReportID}</h1>
+          <p className="text-muted">Detailed information and evidence for the reported emergency situation</p>
         </div>
 
         {/* Status Alert Bar */}
-        <div className={`mb-8 p-4 rounded-xl border-l-4 ${
-          status === 'Pending' ? 'bg-amber-50 border-amber-400' : 
-          status === 'In Progress' ? 'bg-blue-50 border-blue-400' : 
-          'bg-emerald-50 border-emerald-400'
-        }`}>
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              {statusConfig[status as keyof typeof statusConfig]?.icon}
+        <div className={`alert alert-${
+          status === 'Pending' ? 'warning' : 
+          status === 'In Progress' ? 'info' : 
+          'success'
+        } border-start border-4 mb-4`}>
+          <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div className="d-flex align-items-center gap-3">
+              <i className={statusConfig[status as keyof typeof statusConfig]?.icon}></i>
               <div>
-                <p className={`font-semibold ${statusConfig[status as keyof typeof statusConfig]?.color}`}>
-                  Status: {status}
-                </p>
-                <p className="text-sm text-slate-600">
+                <p className="fw-semibold mb-1">Status: {status}</p>
+                <p className="small mb-0">
                   {status === 'Pending' ? 'Awaiting emergency response' : 
                    status === 'In Progress' ? 'Emergency services are responding' : 
                    'Emergency has been resolved'}
                 </p>
               </div>
             </div>
-            <div className="flex gap-2 flex-wrap">
-              <button className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors shadow-sm">
-                <CheckCircle className="w-4 h-4 inline mr-2" />
-                Mark Resolved
-              </button>
-              <button className="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg font-medium transition-colors shadow-sm">
-                <Share2 className="w-4 h-4 inline mr-2" />
-                Share Report
-              </button>
-            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Main Content - Left Column */}
-          <div className="lg:col-span-2 space-y-6">
-            
+        <div className="row g-4">
+          {/* Main Content */}
+          <div className="col-lg-8">
             {/* Emergency Details Card */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${emergencyConfig.bgColor}`}>
-                    <AlertCircle className={`w-5 h-5 ${emergencyConfig.color}`} />
+            <div className="card mb-4">
+              <div className="card-header text-white">
+                <div className="d-flex align-items-center gap-3">
+                  <div className="avatar-sm bg-white bg-opacity-20 d-flex align-items-center justify-content-center rounded">
+                    <i className="fas fa-exclamation-triangle"></i>
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-slate-900">Emergency Details</h2>
-                    <p className="text-slate-600 text-sm">Critical incident information</p>
+                    <h5 className="mb-1">Emergency Details</h5>
+                    <p className="mb-0 opacity-75 small">Critical incident information</p>
                   </div>
                 </div>
               </div>
               
-              <div className="p-6 space-y-6">
-                {/* Emergency Type & Urgency */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className={`p-4 rounded-lg border ${emergencyConfig.bgColor} ${emergencyConfig.color.replace('text-', 'border-').replace('600', '200')}`}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-2xl">{emergencyConfig.icon}</span>
-                      <h3 className="font-semibold">Emergency Type</h3>
+              <div className="card-body">
+                {/* Emergency Type */}
+                <div className="row g-3 mb-4">
+                  <div className="col-12">
+                    <div className={`emergency-type-card ${emergencyConfig.bgColor} bg-opacity-10 border-${emergencyConfig.bgColor.replace('bg-', '')}`}>
+                      <div className="d-flex align-items-center gap-2 mb-2">
+                        <span className="fs-4">{emergencyConfig.icon}</span>
+                        <h6 className="fw-semibold mb-0">Emergency Type</h6>
+                      </div>
+                      <p className="h5 fw-bold mb-0">{report.EmergencyType}</p>
                     </div>
-                    <p className="text-lg font-bold">{report.EmergencyType}</p>
-                  </div>
-                  <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                    <div className="flex items-center gap-2 mb-2">
-                      <AlertTriangle className="w-5 h-5 text-slate-600" />
-                      <h3 className="font-semibold text-slate-700">Urgency Level</h3>
-                    </div>
-                    <p className={`text-lg font-bold ${
-                      emergencyConfig.urgency === 'Critical' ? 'text-red-600' :
-                      emergencyConfig.urgency === 'High' ? 'text-orange-600' :
-                      emergencyConfig.urgency === 'Medium' ? 'text-amber-600' : 'text-emerald-600'
-                    }`}>
-                      {emergencyConfig.urgency}
-                    </p>
                   </div>
                 </div>
 
                 {/* Time Reported */}
-                <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Calendar className="w-5 h-5 text-slate-600" />
-                    <h3 className="font-semibold text-slate-700">Time Reported</h3>
+                <div className="bg-light rounded p-3 mb-4">
+                  <div className="d-flex align-items-center gap-2 mb-2">
+                    <i className="fas fa-calendar text-muted"></i>
+                    <h6 className="fw-semibold mb-0 text-muted">Time Reported</h6>
                   </div>
-                  <p className="text-slate-900 font-medium">
-                    {formatDistanceToNowStrict(new Date(createdAt), {
-                      addSuffix: true,
-                    })}
+                  <p className="fw-medium mb-1">
+                    {(() => {
+                      const now = new Date();
+                      const reportTime = new Date(createdAt);
+                      const diffInMs = now.getTime() - reportTime.getTime();
+                      const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+                      const diffInHours = Math.floor(diffInMinutes / 60);
+                      const remainingMinutes = diffInMinutes % 60;
+                      
+                      if (diffInHours > 0) {
+                        return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ${remainingMinutes > 0 ? `and ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''}` : ''} ago`;
+                      } else {
+                        return `${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`;
+                      }
+                    })()}
                   </p>
-                  <p className="text-slate-500 text-sm mt-1">
+                  <small className="text-muted">
                     {new Date(createdAt).toLocaleString()}
-                  </p>
+                  </small>
                 </div>
 
                 {/* Description */}
-                <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                  <h3 className="font-semibold text-slate-700 mb-3">Incident Description</h3>
-                  <p className="text-slate-800 leading-relaxed whitespace-pre-line">
+                <div className="bg-light rounded p-3 mb-4">
+                  <h6 className="fw-semibold text-muted mb-3">Incident Description</h6>
+                  <p className="mb-0 lh-lg">
                     {report.EmerDescription}
                   </p>
                 </div>
 
                 {/* Location */}
-                <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                  <h3 className="font-semibold text-slate-700 mb-4">Location</h3>
+                <div className="bg-light rounded p-3 mb-4">
+                  <h6 className="fw-semibold text-muted mb-3">Location</h6>
                   <LocationDisplay location={report.Report_Location} />
                 </div>
 
                 {/* Shared With */}
-                <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                  <h3 className="font-semibold text-slate-700 mb-3">Notified Authorities</h3>
-                  <div className="flex flex-wrap gap-2">
+                <div className="bg-light rounded p-3">
+                  <h6 className="fw-semibold text-muted mb-3">Notified Authorities</h6>
+                  <div className="d-flex flex-wrap gap-2">
                     {report.SharedWith.split(', ').map((authority, idx) => (
-                      <span key={idx} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                      <span key={idx} className="badge bg-primary">
                         {authority}
                       </span>
                     ))}
@@ -598,40 +644,43 @@ function ReportContent() {
             </div>
 
             {/* Media Evidence Card */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-indigo-100 rounded-lg">
-                    <Camera className="w-5 h-5 text-indigo-600" />
+            <div className="card">
+              <div className="card-header text-white">
+                <div className="d-flex align-items-center gap-3">
+                  <div className="avatar-sm bg-white bg-opacity-20 d-flex align-items-center justify-content-center rounded">
+                    <i className="fas fa-camera"></i>
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-slate-900">Evidence & Media</h2>
-                    <p className="text-slate-600 text-sm">Visual and audio documentation</p>
+                    <h5 className="mb-1">Evidence & Media</h5>
+                    <p className="mb-0 opacity-75 small">Visual and audio documentation</p>
                   </div>
                 </div>
               </div>
               
-              <div className="p-6 space-y-6">
+              <div className="card-body">
                 {/* Photo Evidence */}
                 {report.MediaPhoto && (
-                  <div>
-                    <h3 className="font-semibold text-slate-700 mb-4 flex items-center gap-2">
-                      <Camera className="w-5 h-5 text-slate-600" />
+                  <div className="mb-4">
+                    <h6 className="fw-semibold text-muted mb-3">
+                      <i className="fas fa-camera me-2"></i>
                       Photo Evidence
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    </h6>
+                    <div className="row g-3">
                       {report.MediaPhoto.split(";")
                         .filter(Boolean)
                         .map((img, idx) => (
-                          <div key={idx} className="relative group overflow-hidden rounded-lg border border-slate-200 shadow-sm">
-                            <Image
-                              src={`data:image/jpeg;base64,${img}`}
-                              alt={`Emergency photo ${idx + 1}`}
-                              width={500}
-                              height={300}
-                              className="object-cover w-full h-48 hover:scale-105 transition-transform duration-300"
-                              unoptimized
-                            />
+                          <div key={idx} className="col-sm-6">
+                            <div className="position-relative overflow-hidden rounded border">
+                              <Image
+                                src={`data:image/jpeg;base64,${img}`}
+                                alt={`Emergency photo ${idx + 1}`}
+                                width={500}
+                                height={300}
+                                className="img-fluid"
+                                style={{ height: '200px', objectFit: 'cover' }}
+                                unoptimized
+                              />
+                            </div>
                           </div>
                         ))}
                     </div>
@@ -641,11 +690,11 @@ function ReportContent() {
                 {/* Audio Evidence */}
                 {report.MediaVoice && (
                   <div>
-                    <h3 className="font-semibold text-slate-700 mb-4 flex items-center gap-2">
-                      <Mic className="w-5 h-5 text-slate-600" />
+                    <h6 className="fw-semibold text-muted mb-3">
+                      <i className="fas fa-microphone me-2"></i>
                       Audio Evidence
-                    </h3>
-                    <div className="space-y-3">
+                    </h6>
+                    <div className="d-flex flex-column gap-3">
                       {report.MediaVoice.split(";")
                         .filter(Boolean)
                         .map((audio, idx) => (
@@ -658,41 +707,39 @@ function ReportContent() {
             </div>
           </div>
 
-          {/* Sidebar - Right Column */}
-          <div className="space-y-6">
-            
+          {/* Sidebar */}
+          <div className="col-lg-4">
             {/* Quick Actions Card */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
-                <h2 className="text-lg font-semibold text-slate-900">Quick Actions</h2>
+            <div className="card mb-4">
+              <div className="card-header text-white">
+                <h6 className="mb-0">Quick Actions</h6>
               </div>
-              <div className="p-4 space-y-3">
+              <div className="card-body d-flex flex-column gap-2">
                 <a
                   href={`tel:${reporter.PhoneNumber}`}
-                  className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors shadow-sm"
+                  className="btn btn-danger d-flex align-items-center justify-content-center gap-2"
                 >
-                  <Phone className="w-5 h-5" />
+                  <i className="fas fa-phone"></i>
                   Call Reporter Now
                 </a>
-                <button className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-sm">
-                  <Mail className="w-5 h-5" />
+                <a
+                  href={`mailto:${reporter.Email}?subject=Emergency Report Update - Report #${report.ReportID}&body=Dear ${reporter.FullName},%0A%0AThis is an update regarding your emergency report #${report.ReportID} for ${report.EmergencyType}.%0A%0AStatus: ${report.Report_Status}%0A%0APlease let us know if you have any additional information or questions.%0A%0ABest regards,%0AEmergency Response Team`}
+                  className="btn btn-primary d-flex align-items-center justify-content-center gap-2"
+                >
+                  <i className="fas fa-envelope"></i>
                   Send Email Update
-                </button>
-                <button className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors shadow-sm">
-                  <CheckCircle className="w-5 h-5" />
-                  Update Status
-                </button>
+                </a>
               </div>
             </div>
 
             {/* Reporter Information Card */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
-                <h2 className="text-lg font-semibold text-slate-900">Reporter Information</h2>
+            <div className="card mb-4">
+              <div className="card-header text-white">
+                <h6 className="mb-0">Reporter Information</h6>
               </div>
               
-              <div className="p-6">
-                <div className="flex items-start gap-4 mb-6">
+              <div className="card-body">
+                <div className="d-flex gap-3 mb-4">
                   {reporter.ProfilePhoto ? (
                     <Image
                       src={
@@ -703,36 +750,37 @@ function ReportContent() {
                       alt="Reporter"
                       width={64}
                       height={64}
-                      className="w-16 h-16 rounded-full border-2 border-slate-200 object-cover"
+                      className="rounded-circle border"
+                      style={{ width: '64px', height: '64px', objectFit: 'cover' }}
                       unoptimized
                     />
                   ) : (
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-100 to-indigo-200 flex items-center justify-center border-2 border-slate-200">
-                      <User className="w-8 h-8 text-blue-600" />
+                    <div className="avatar avatar-lg">
+                      <i className="fas fa-user"></i>
                     </div>
                   )}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-slate-900 text-lg">{reporter.FullName}</h3>
-                    <p className="text-slate-600">@{reporter.Username}</p>
-                    <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full mt-2">
+                  <div className="flex-grow-1">
+                    <h6 className="fw-semibold mb-1">{reporter.FullName}</h6>
+                    <p className="text-muted mb-2">@{reporter.Username}</p>
+                    <span className="badge bg-primary">
                       {reporter.UserType}
                     </span>
                   </div>
                 </div>
                 
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                    <Phone className="w-5 h-5 text-slate-500 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-slate-600">Phone</p>
-                      <p className="font-medium text-slate-900">{reporter.PhoneNumber}</p>
+                <div className="d-flex flex-column gap-3">
+                  <div className="d-flex align-items-center gap-3 p-2 bg-light rounded">
+                    <i className="fas fa-phone text-muted"></i>
+                    <div className="flex-grow-1">
+                      <small className="text-muted">Phone</small>
+                      <p className="fw-medium mb-0">{reporter.PhoneNumber}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                    <Mail className="w-5 h-5 text-slate-500 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-slate-600">Email</p>
-                      <p className="font-medium text-slate-900 truncate">{reporter.Email}</p>
+                  <div className="d-flex align-items-center gap-3 p-2 bg-light rounded">
+                    <i className="fas fa-envelope text-muted"></i>
+                    <div className="flex-grow-1">
+                      <small className="text-muted">Email</small>
+                      <p className="fw-medium mb-0 text-truncate">{reporter.Email}</p>
                     </div>
                   </div>
                 </div>
@@ -740,98 +788,71 @@ function ReportContent() {
             </div>
 
             {/* Timeline Card */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
-                <h2 className="text-lg font-semibold text-slate-900">Timeline</h2>
+            <div className="card mb-4">
+              <div className="card-header text-white">
+                <h6 className="mb-0">Timeline</h6>
               </div>
-              <div className="p-4">
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="p-1 bg-red-100 rounded-full mt-1">
-                      <AlertTriangle className="w-3 h-3 text-red-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-slate-900 text-sm">Report Created</p>
-                      <p className="text-slate-600 text-xs">
-                        {formatDistanceToNowStrict(new Date(createdAt), {
-                          addSuffix: true,
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="p-1 bg-amber-100 rounded-full mt-1">
-                      <Clock className="w-3 h-3 text-amber-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-slate-900 text-sm">Authorities Notified</p>
-                      <p className="text-slate-600 text-xs">
-                        {formatDistanceToNowStrict(new Date(new Date(createdAt).getTime() + 2 * 60 * 1000), {
-                          addSuffix: true,
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="p-1 bg-blue-100 rounded-full mt-1">
-                      <Shield className="w-3 h-3 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-slate-900 text-sm">Response Team Assigned</p>
-                      <p className="text-slate-600 text-xs">Awaiting update</p>
-                    </div>
-                  </div>
+              <div className="card-body">
+                <div className="timeline-item text-danger mb-3">
+                  <h6 className="fw-semibold mb-1">Report Created</h6>
+                  <small className="text-muted">
+                    {formatDistanceToNowStrict(new Date(createdAt), {
+                      addSuffix: true,
+                    })}
+                  </small>
+                </div>
+                <div className="timeline-item text-warning mb-3">
+                  <h6 className="fw-semibold mb-1">Authorities Notified</h6>
+                  <small className="text-muted">
+                    {formatDistanceToNowStrict(new Date(new Date(createdAt).getTime() + 2 * 60 * 1000), {
+                      addSuffix: true,
+                    })}
+                  </small>
+                </div>
+                <div className="timeline-item text-primary">
+                  <h6 className="fw-semibold mb-1">Response Team Assigned</h6>
+                  <small className="text-muted">Awaiting update</small>
                 </div>
               </div>
             </div>
 
             {/* Priority Status Card */}
-            <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded-xl border border-red-200 p-6">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-red-100 rounded-full">
-                  <AlertTriangle className="w-5 h-5 text-red-600" />
+            <div className="card border-danger">
+              <div className="card-body">
+                <div className="d-flex align-items-center gap-3 mb-3">
+                  <div className="avatar-sm bg-danger bg-opacity-10 d-flex align-items-center justify-content-center rounded">
+                    <i className="fas fa-exclamation-triangle text-danger"></i>
+                  </div>
+                  <h6 className="fw-semibold text-danger mb-0">High Priority Alert</h6>
                 </div>
-                <h3 className="font-semibold text-red-900">High Priority Alert</h3>
-              </div>
-              <p className="text-red-800 text-sm mb-4">
-                This emergency requires immediate attention from response teams.
-              </p>
-              <div className="flex items-center gap-2 text-red-700 text-xs">
-                <Clock className="w-4 h-4" />
-                <span>Response time: &lt; 5 minutes</span>
+                <p className="text-danger mb-3 small">
+                  This emergency requires immediate attention from response teams.
+                </p>
+                <div className="d-flex align-items-center gap-2 text-danger">
+                  <i className="fas fa-clock"></i>
+                  <small>Response time: &lt; 5 minutes</small>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Footer Actions */}
-        <div className="mt-12 p-6 bg-white rounded-xl shadow-sm border border-slate-200">
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="flex items-center justify-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors shadow-sm">
-              <PhoneCall className="w-5 h-5" />
-              Emergency Contact
-            </button>
-            <button className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-sm">
-              <Share2 className="w-5 h-5" />
-              Share with Team
-            </button>
-            <button className="flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors shadow-sm">
-              <CheckCircle2 className="w-5 h-5" />
-              Mark as Resolved
-            </button>
-          </div>
-        </div>
+    
       </div>
-    </div>
+    </>
   );
-}export default function ReportPage() {
+}
+
+export default function ReportPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-          <div className="flex flex-col items-center gap-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
-            <p className="text-slate-600 font-medium">Loading emergency report...</p>
+        <div className="container-fluid py-4">
+          <div className="text-center">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <p className="mt-3 text-muted">Loading emergency report...</p>
           </div>
         </div>
       }

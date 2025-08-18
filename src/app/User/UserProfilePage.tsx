@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from 'next/image';
 import {
   ArrowLeft,
@@ -47,7 +48,8 @@ interface Report {
 }
 
 const UserProfilePage = () => {
-  const userID = 1;
+  const searchParams = useSearchParams();
+  const userID = searchParams.get('userID');
   
   const [user, setUser] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +63,11 @@ const UserProfilePage = () => {
   });
 
   useEffect(() => {
+    if (!userID) {
+      setError("No user ID provided in URL");
+      return;
+    }
+
     async function fetchUser() {
       setIsLoading(true);
       setError(null);
@@ -115,61 +122,53 @@ const UserProfilePage = () => {
   }, [userID]);
 
 const getStatusBadge = (status: string) => {
-  const baseClasses =
-    "inline-flex items-center px-3 py-1 rounded-md text-xs font-semibold border";
+  const baseClasses = "badge";
 
   switch (status) {
     case "Completed":
       return (
-        <span className={`${baseClasses} bg-emerald-50 text-emerald-700 border-emerald-200`}>
-          <CheckCircle className="w-3 h-3 mr-1.5" />
+        <span className={`${baseClasses} bg-success text-white`}>
+          <i className="fas fa-check-circle me-1"></i>
           Completed
         </span>
       );
 
     case "On-Going":
-      return (
-        <span className={`${baseClasses} bg-orange-50 text-orange-700 border-orange-200`}>
-          <Clock className="w-3 h-3 mr-1.5" />
-          In Progress
-        </span>
-      );
-
     case "On-going":
       return (
-        <span className={`${baseClasses} bg-orange-50 text-orange-700 border-orange-200`}>
-          <Clock className="w-3 h-3 mr-1.5" />
+        <span className={`${baseClasses} bg-warning text-dark`}>
+          <i className="fas fa-clock me-1"></i>
           In Progress
         </span>
       );
 
     case "Abandoned":
       return (
-        <span className={`${baseClasses} bg-rose-50 text-rose-700 border-rose-200`}>
-          <XCircle className="w-3 h-3 mr-1.5" />
+        <span className={`${baseClasses} bg-danger text-white`}>
+          <i className="fas fa-times-circle me-1"></i>
           Abandoned
         </span>
       );
 
     case "Escalated":
       return (
-        <span className={`${baseClasses} bg-amber-50 text-amber-700 border-amber-200`}>
-          <AlertTriangle className="w-3 h-3 mr-1.5" />
+        <span className={`${baseClasses} bg-warning text-dark`}>
+          <i className="fas fa-exclamation-triangle me-1"></i>
           Escalated
         </span>
       );
 
     case "False report":
       return (
-        <span className={`${baseClasses} bg-red-50 text-red-700 border-red-200`}>
-          <XCircle className="w-3 h-3 mr-1.5" />
+        <span className={`${baseClasses} bg-danger text-white`}>
+          <i className="fas fa-times-circle me-1"></i>
           False report
         </span>
       );
 
     default:
       return (
-        <span className={`${baseClasses} bg-slate-50 text-slate-700 border-slate-200`}>
+        <span className={`${baseClasses} bg-secondary text-white`}>
           {status}
         </span>
       );
@@ -206,52 +205,55 @@ const getStatusBadge = (status: string) => {
 
   const getSortIcon = (key: keyof Report) => {
     if (!sortConfig || sortConfig.key !== key) {
-      return <span className="opacity-30"><ChevronUp className="w-3 h-3 inline" /></span>;
+      return <i className="fas fa-sort opacity-50 ms-1"></i>;
     }
     return sortConfig.direction === 'asc' ? 
-      <ChevronUp className="w-3 h-3 inline" /> : 
-      <ChevronDown className="w-3 h-3 inline" />;
+      <i className="fas fa-sort-up ms-1"></i> : 
+      <i className="fas fa-sort-down ms-1"></i>;
   };
 
 type EmergencyType = "Fire" | "Crime" | "SOS" | string;  // Explicit union type
 const getPriorityLevel = (type: EmergencyType) => { 
     switch (type) {
       case "Fire":
-        return { color: "bg-red-500", level: "Critical" };
+        return { color: "bg-danger", level: "Critical" };
       case "Crime":
-        return { color: "bg-blue-500", level: "High" };
+        return { color: "bg-primary", level: "High" };
       case "SOS":
-        return { color: "bg-orange-500", level: "Urgent" };
+        return { color: "bg-warning", level: "Urgent" };
       default:
-        return { color: "bg-slate-500", level: "Standard" };
+        return { color: "bg-secondary", level: "Standard" };
     }
   };
 
   const getReportStats = () => {
     const completed = reports.filter(r => r.Report_Status === "Completed").length;
-    const ongoing = reports.filter(r => r.Report_Status === "On-Going").length;
-    const Abondoned = reports.filter(r => r.Report_Status === "Abondoned").length;
-    const False = reports.filter(r => r.Report_Status === "False report").length;
-    const escalate = reports.filter(r => r.Report_Status === "Escalated").length;
-    return { completed, ongoing, Abondoned,False, escalate, total: reports.length };
+    const ongoing = reports.filter(r => r.Report_Status === "On-Going" || r.Report_Status === "On-going").length;
+    const abandoned = reports.filter(r => r.Report_Status === "Abandoned").length;
+    const falseReports = reports.filter(r => r.Report_Status === "False report").length;
+    const escalated = reports.filter(r => r.Report_Status === "Escalated").length;
+    return { completed, ongoing, abandoned, falseReports, escalated, total: reports.length };
   };
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-8 max-w-md w-full">
-          <div className="text-center">
-            <div className="mx-auto flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mb-4">
-              <AlertCircle className="w-6 h-6 text-red-600" />
+      <div className="container-fluid py-4">
+        <div className="row justify-content-center">
+          <div className="col-md-6">
+            <div className="card border-0 shadow-sm">
+              <div className="card-body text-center py-5">
+                <i className="fas fa-exclamation-circle text-danger fa-3x mb-3"></i>
+                <h3 className="mb-3">Unable to Load Profile</h3>
+                <p className="text-muted mb-4">{error}</p>
+                <button
+                  onClick={() => window.history.back()}
+                  className="btn btn-primary"
+                >
+                  <i className="fas fa-arrow-left me-2"></i>
+                  Return to Dashboard
+                </button>
+              </div>
             </div>
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">Unable to Load Profile</h3>
-            <p className="text-sm text-slate-600 mb-6">{error}</p>
-            <button
-              onClick={() => window.history.back()}
-              className="w-full inline-flex justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-slate-900 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500"
-            >
-              Return to Dashboard
-            </button>
           </div>
         </div>
       </div>
@@ -260,10 +262,12 @@ const getPriorityLevel = (type: EmergencyType) => {
 
   if (isLoading || !user) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-8 text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900 mx-auto mb-4"></div>
-          <p className="text-sm text-slate-600 font-medium">Loading user profile...</p>
+      <div className="container-fluid py-4">
+        <div className="text-center">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-3 text-muted">Loading user profile...</p>
         </div>
       </div>
     );
@@ -272,311 +276,378 @@ const getPriorityLevel = (type: EmergencyType) => {
   const stats = getReportStats();
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Professional Header */}
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => window.history.back()}
-                className="inline-flex items-center px-3 py-2 border border-slate-300 text-sm leading-4 font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Dashboard
-              </button>
-              <div className="border-l border-slate-300 pl-4">
-                <h1 className="text-xl font-semibold text-slate-900">User Profile Management</h1>
-                <p className="text-sm text-slate-500 mt-0.5">Comprehensive user account overview</p>
+    <>
+      <style jsx>{`
+        .stat-badge {
+          background: rgba(255, 255, 255, 0.2);
+          backdrop-filter: blur(10px);
+          padding: 8px 16px;
+          border-radius: 20px;
+          font-size: 0.875rem;
+          font-weight: 600;
+          color: white;
+        }
+        
+        .avatar {
+          width: 64px;
+          height: 64px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-weight: bold;
+          font-size: 1.5rem;
+        }
+        
+        .profile-avatar {
+          width: 80px;
+          height: 80px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-weight: bold;
+          font-size: 2rem;
+          margin: 0 auto 1rem;
+          position: relative;
+        }
+        
+        .online-indicator {
+          position: absolute;
+          bottom: 5px;
+          right: 5px;
+          width: 16px;
+          height: 16px;
+          background-color: #28a745;
+          border: 3px solid white;
+          border-radius: 50%;
+          box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.25);
+        }
+        
+        .card {
+          border: none;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .card-header {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border-bottom: none;
+        }
+        
+        .table th {
+          background-color: #f8f9fa;
+          border-bottom: 2px solid #dee2e6;
+          font-weight: 600;
+          color: #495057;
+        }
+        
+        .priority-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          display: inline-block;
+          margin-right: 8px;
+        }
+        
+        .completion-bar {
+          height: 8px;
+          background-color: #e9ecef;
+          border-radius: 4px;
+          overflow: hidden;
+        }
+        
+        .completion-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+          transition: width 0.3s ease;
+        }
+      `}</style>
+
+      <div className="container-fluid py-4">
+        {/* Header */}
+        <div className="card mb-4">
+          <div className="card-header text-white py-4">
+            <div className="d-flex justify-content-between align-items-center">
+              <div className="d-flex align-items-center">
+                <button
+                  onClick={() => window.history.back()}
+                  className="btn btn-light btn-sm me-3"
+                >
+                  <i className="fas fa-arrow-left me-2"></i>
+                  Back to Dashboard
+                </button>
+                <div>
+                  <h3 className="mb-1">
+                    <i className="fas fa-user me-2"></i>
+                    User Profile Management
+                  </h3>
+                  <p className="mb-0 opacity-75">Comprehensive user account overview</p>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-800">
-                User ID: {user.UserID}
-              </span>
-              <button className="p-2 text-slate-400 hover:text-slate-500 hover:bg-slate-100 rounded-md">
-                <Settings className="w-4 h-4" />
-              </button>
+              
+              <div className="d-flex gap-3 align-items-center">
+                <div className="stat-badge">
+                  <i className="fas fa-id-badge me-1"></i>
+                  User ID: {userID || 'N/A'}
+                </div>
+                <button className="btn btn-light btn-sm">
+                  <i className="fas fa-cog"></i>
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          
-          {/* User Profile Card */}
-          <div className="lg:col-span-1">
-            <div className="bg-white shadow-sm rounded-lg border border-slate-200">
-              
-              {/* Profile Header */}
-              <div className="px-6 py-6 border-b border-slate-200">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-slate-900">Profile Information</h2>
-                  <button className="p-1 text-slate-400 hover:text-slate-600">
-                    <Edit className="w-4 h-4" />
+        <div className="row">
+          {/* Profile Card */}
+          <div className="col-lg-4">
+            <div className="card mb-4">
+              <div className="card-header bg-light">
+                <div className="d-flex justify-content-between align-items-center">
+                  <h5 className="mb-0">
+                    <i className="fas fa-user me-2"></i>
+                    Profile Information
+                  </h5>
+                  <button className="btn btn-sm btn-outline-secondary">
+                    <i className="fas fa-edit"></i>
                   </button>
                 </div>
-                
-                <div className="text-center">
-                  <div className="relative inline-block">
-                    <div className="w-16 h-16 bg-slate-600 rounded-full flex items-center justify-center text-white text-lg font-semibold">
-                      {user.ProfilePhoto ? (
-                        <Image
-                            src={user.ProfilePhoto}
-                            alt="Profile"
-                            width={64}
-                            height={64}
-                            className="w-full h-full object-cover rounded-full"
-                          />
-                      ) : (
-                        user.FullName.split(" ").map(n => n[0]).join("").toUpperCase()
-                      )}
-                    </div>
-                    <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-emerald-400 border-2 border-white rounded-full"></div>
-                  </div>
-                  
-                  <div className="mt-4">
-                    <h3 className="text-lg font-semibold text-slate-900">{user.FullName}</h3>
-                    <p className="text-sm text-slate-500">@{user.Username}</p>
-                  </div>
-                  
-                  <div className="mt-3">
-                    <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                      <Shield className="w-3 h-3 mr-1" />
-                      {user.UserType}
-                    </span>
-                  </div>
-                </div>
               </div>
-
-              {/* Contact Information */}
-              <div className="px-6 py-4">
-                <h4 className="text-sm font-semibold text-slate-900 mb-3">Contact Details</h4>
-                <div className="space-y-3">
-                  <div className="flex items-center text-sm">
-                    <Mail className="w-4 h-4 text-slate-400 mr-3 flex-shrink-0" />
-                    <span className="text-slate-600 break-all">{user.Email}</span>
+              
+              <div className="card-body text-center">
+                <div className="profile-avatar">
+                  {user.ProfilePhoto ? (
+                    <Image
+                      src={user.ProfilePhoto}
+                      alt="Profile"
+                      width={80}
+                      height={80}
+                      className="rounded-circle"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    user.FullName.split(" ").map(n => n[0]).join("").toUpperCase()
+                  )}
+                  <div className="online-indicator"></div>
+                </div>
+                
+                <h4 className="mb-1">{user.FullName}</h4>
+                <p className="text-muted mb-3">@{user.Username}</p>
+                
+                <span className="badge bg-primary mb-3">
+                  <i className="fas fa-shield-alt me-1"></i>
+                  {user.UserType}
+                </span>
+                
+                <hr />
+                
+                <div className="text-start">
+                  <div className="d-flex align-items-center mb-3">
+                    <i className="fas fa-envelope text-muted me-3"></i>
+                    <small className="text-break">{user.Email}</small>
                   </div>
-                  <div className="flex items-center text-sm">
-                    <Phone className="w-4 h-4 text-slate-400 mr-3 flex-shrink-0" />
-                    <span className="text-slate-600">{user.PhoneNumber || "Not provided"}</span>
+                  <div className="d-flex align-items-center mb-3">
+                    <i className="fas fa-phone text-muted me-3"></i>
+                    <small>{user.PhoneNumber || "Not provided"}</small>
                   </div>
-                  <div className="flex items-center text-sm">
-                    <Calendar className="w-4 h-4 text-slate-400 mr-3 flex-shrink-0" />
-                    <span className="text-slate-600">
+                  <div className="d-flex align-items-center">
+                    <i className="fas fa-calendar text-muted me-3"></i>
+                    <small>
                       Member since {new Date(user.CreatedAt).toLocaleDateString('en-US', {
                         month: 'long',
                         day: 'numeric',
                         year: 'numeric'
                       })}
-                    </span>
+                    </small>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Statistics Overview */}
-            <div className="bg-white shadow-sm rounded-lg border border-slate-200 mt-6">
-              <div className="px-6 py-4 border-b border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-900">Activity Overview</h3>
+            {/* Statistics Card */}
+            <div className="card">
+              <div className="card-header bg-light">
+                <h5 className="mb-0">
+                  <i className="fas fa-chart-bar me-2"></i>
+                  Activity Overview
+                </h5>
               </div>
-              <div className="px-6 py-4">
-                <dl className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <dt className="text-sm text-slate-500">Total Reports</dt>
-                    <dd className="text-sm font-semibold text-slate-900">{stats.total}</dd>
+              <div className="card-body">
+                <div className="row text-center mb-3">
+                  <div className="col">
+                    <h3 className="text-primary mb-0">{stats.total}</h3>
+                    <small className="text-muted">Total Reports</small>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <dt className="text-sm text-slate-500">Completed</dt>
-                    <dd className="text-sm font-semibold text-emerald-600">{stats.completed}</dd>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <dt className="text-sm text-slate-500">In Progress</dt>
-                    <dd className="text-sm font-semibold text-orange-600">{stats.ongoing}</dd>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <dt className="text-sm text-slate-500">Abondoned</dt>
-                    <dd className="text-sm font-semibold text-rose-500">{stats.Abondoned}</dd>
-                  </div>
-                    <div className="flex justify-between items-center">
-                    <dt className="text-sm text-slate-500">Escalated</dt>
-                    <dd className="text-sm font-semibold text-amber-600">{stats.escalate}</dd>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <dt className="text-sm text-slate-500">False Report</dt>
-                    <dd className="text-sm font-semibold text-red-500">{stats.False}</dd>
-                  </div>
-
-                </dl>
+                </div>
+                
+                <hr />
+                
+                <div className="d-flex justify-content-between mb-2">
+                  <span className="text-muted small">Completed</span>
+                  <span className="badge bg-success">{stats.completed}</span>
+                </div>
+                <div className="d-flex justify-content-between mb-2">
+                  <span className="text-muted small">In Progress</span>
+                  <span className="badge bg-warning text-dark">{stats.ongoing}</span>
+                </div>
+                <div className="d-flex justify-content-between mb-2">
+                  <span className="text-muted small">Abandoned</span>
+                  <span className="badge bg-danger">{stats.abandoned}</span>
+                </div>
+                <div className="d-flex justify-content-between mb-2">
+                  <span className="text-muted small">Escalated</span>
+                  <span className="badge bg-warning text-dark">{stats.escalated}</span>
+                </div>
+                <div className="d-flex justify-content-between mb-3">
+                  <span className="text-muted small">False Reports</span>
+                  <span className="badge bg-danger">{stats.falseReports}</span>
+                </div>
                 
                 {stats.total > 0 && (
-                  <div className="mt-4 pt-4 border-t border-slate-200">
-                    <div className="text-xs text-slate-500 mb-2">Completion Rate</div>
-                    <div className="w-full bg-slate-200 rounded-full h-2">
-                      <div 
-                        className="bg-emerald-500 h-2 rounded-full" 
-                        style={{ width: `${(stats.completed / stats.total) * 100}%` }}
-                      ></div>
+                  <>
+                    <hr />
+                    <div className="text-center">
+                      <small className="text-muted d-block mb-2">Completion Rate</small>
+                      <div className="completion-bar mb-2">
+                        <div 
+                          className="completion-fill"
+                          style={{ width: `${(stats.completed / stats.total) * 100}%` }}
+                        ></div>
+                      </div>
+                      <small className="text-success fw-bold">
+                        {Math.round((stats.completed / stats.total) * 100)}% Complete
+                      </small>
                     </div>
-                    <div className="text-xs text-slate-600 mt-1">
-                      {Math.round((stats.completed / stats.total) * 100)}% Complete
-                    </div>
-                  </div>
+                  </>
                 )}
               </div>
             </div>
           </div>
 
           {/* Reports Section */}
-          <div className="lg:col-span-3">
-            <div className="bg-white shadow-sm rounded-lg border border-slate-200">
-              
-              {/* Reports Header */}
-              <div className="px-6 py-4 border-b border-slate-200">
-                <div className="flex items-center justify-between">
+          <div className="col-lg-8">
+            <div className="card">
+              <div className="card-header bg-light">
+                <div className="d-flex justify-content-between align-items-center">
                   <div>
-                    <h2 className="text-lg font-semibold text-slate-900 flex items-center">
-                      <Activity className="w-5 h-5 mr-2 text-slate-400" />
+                    <h5 className="mb-1">
+                      <i className="fas fa-clipboard-list me-2"></i>
                       Incident Reports
-                    </h2>
-                    <p className="text-sm text-slate-500 mt-1">
+                    </h5>
+                    <small className="text-muted">
                       {reports.length} {reports.length === 1 ? 'report' : 'reports'} submitted by this user
-                    </p>
+                    </small>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <button className="inline-flex items-center px-3 py-2 border border-slate-300 text-xs font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50">
-                      <Download className="w-3 h-3 mr-1.5" />
+                  <div className="d-flex gap-2">
+                    <button className="btn btn-sm btn-outline-primary">
+                      <i className="fas fa-download me-1"></i>
                       Export
                     </button>
-                    <button className="p-2 text-slate-400 hover:text-slate-600">
-                      <MoreHorizontal className="w-4 h-4" />
+                    <button className="btn btn-sm btn-outline-secondary">
+                      <i className="fas fa-ellipsis-h"></i>
                     </button>
                   </div>
                 </div>
               </div>
 
-              {/* Reports Content */}
-              <div className="px-6 py-6">
+              <div className="card-body p-0">
                 {reportsLoading && (
-                  <div className="text-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900 mx-auto mb-4"></div>
-                    <p className="text-sm text-slate-600">Loading incident reports...</p>
+                  <div className="text-center py-5">
+                    <div className="spinner-border text-primary mb-3"></div>
+                    <p className="text-muted">Loading incident reports...</p>
                   </div>
                 )}
 
                 {reportsError && (
-                  <div className="text-center py-12">
-                    <div className="mx-auto flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mb-4">
-                      <AlertCircle className="w-6 h-6 text-red-600" />
-                    </div>
-                    <h3 className="text-sm font-medium text-slate-900 mb-2">Unable to Load Reports</h3>
-                    <p className="text-sm text-slate-600">{reportsError}</p>
+                  <div className="text-center py-5">
+                    <i className="fas fa-exclamation-circle text-danger fa-3x mb-3"></i>
+                    <h5 className="mb-3">Unable to Load Reports</h5>
+                    <p className="text-muted">{reportsError}</p>
                   </div>
                 )}
 
                 {reports.length === 0 && !reportsLoading && (
-                  <div className="text-center py-12">
-                    <FileText className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-                    <h3 className="text-sm font-medium text-slate-900 mb-2">No Reports Found</h3>
-                    <p className="text-sm text-slate-500">This user has not submitted any incident reports.</p>
+                  <div className="text-center py-5">
+                    <i className="fas fa-file-alt text-muted fa-3x mb-3 opacity-50"></i>
+                    <h5 className="mb-3">No Reports Found</h5>
+                    <p className="text-muted">This user has not submitted any incident reports.</p>
                   </div>
                 )}
 
-                {/* Reports Table */}
                 {reports.length > 0 && (
-                  <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-                    <table className="min-w-full divide-y divide-slate-200">
-                      <thead className="bg-slate-50">
+                  <div className="table-responsive">
+                    <table className="table table-hover mb-0">
+                      <thead>
                         <tr>
-                          <th
-                            scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer"
+                          <th 
+                            className="cursor-pointer"
                             onClick={() => requestSort('ReportID')}
                           >
-                            <div className="flex items-center">
-                              Report ID
-                              <span className="ml-1">
-                                {getSortIcon('ReportID')}
-                              </span>
-                            </div>
+                            Report ID
+                            {getSortIcon('ReportID')}
                           </th>
-                          <th
-                            scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
-                          >
-                            Report Details
-                          </th>
-                          <th
-                            scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
-                          >
-                            Location
-                          </th>
-                          <th
-                            scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
-                          >
-                            Status
-                          </th>
-                          <th
-                            scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer"
+                          <th>Report Details</th>
+                          <th>Location</th>
+                          <th>Status</th>
+                          <th 
+                            className="cursor-pointer"
                             onClick={() => requestSort('dateReported')}
                           >
-                            <div className="flex items-center">
-                              Date Submitted
-                              <span className="ml-1">
-                                {getSortIcon('dateReported')}
-                              </span>
-                            </div>
+                            Date Submitted
+                            {getSortIcon('dateReported')}
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-slate-200">
-                        {sortedReports.map((report) => {
+                      <tbody>
+                        {sortedReports.map((report, index) => {
                           const priority = getPriorityLevel(report.EmergencyType);
                           return (
-                            <tr key={report.ReportID} className="hover:bg-slate-50">
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
-                                {report.ReportID}
+                            <tr key={report.ReportID} className={index % 2 === 0 ? 'table-light' : ''}>
+                              <td>
+                                <span className="fw-bold">#{report.ReportID}</span>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex items-center">
-                                  <div className={`flex-shrink-0 w-2 h-2 rounded-full ${priority.color} mr-3`}></div>
+                              <td>
+                                <div className="d-flex align-items-center">
+                                  <span className={`priority-dot ${priority.color}`}></span>
                                   <div>
-                                    <div className="text-sm font-medium text-slate-900">
-                                      {report.EmergencyType}
-                                    </div>
-                                    <div className="text-sm text-slate-600 mt-1 max-w-xs truncate">
+                                    <div className="fw-semibold">{report.EmergencyType}</div>
+                                    <small className="text-muted text-truncate d-block" style={{maxWidth: '250px'}}>
                                       {report.EmerDescription}
-                                    </div>
+                                    </small>
                                   </div>
                                 </div>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex items-center text-sm text-slate-600">
-                                  <MapPin className="w-4 h-4 text-slate-400 mr-1.5" />
-                                  {report.Report_Location}
+                              <td>
+                                <div className="d-flex align-items-center">
+                                  <i className="fas fa-map-marker-alt text-muted me-2"></i>
+                                  <small>{report.Report_Location}</small>
                                 </div>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
+                              <td>
                                 {getStatusBadge(report.Report_Status)}
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm text-slate-600 flex items-center">
-                                  <Clock className="w-4 h-4 text-slate-400 mr-1.5" />
-                                  {new Date(report.dateReported).toLocaleDateString('en-US', {
-                                    month: 'short',
-                                    day: 'numeric',
-                                    year: 'numeric'
-                                  })}
-                                </div>
-                                <div className="text-xs text-slate-500">
-                                  {new Date(report.dateReported).toLocaleTimeString('en-US', {
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                  })}
+                              <td>
+                                <div>
+                                  <div className="d-flex align-items-center">
+                                    <i className="fas fa-calendar text-muted me-2"></i>
+                                    <small>
+                                      {new Date(report.dateReported).toLocaleDateString('en-US', {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        year: 'numeric'
+                                      })}
+                                    </small>
+                                  </div>
+                                  <small className="text-muted">
+                                    {new Date(report.dateReported).toLocaleTimeString('en-US', {
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </small>
                                 </div>
                               </td>
                             </tr>
@@ -591,7 +662,7 @@ const getPriorityLevel = (type: EmergencyType) => {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

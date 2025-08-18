@@ -492,12 +492,12 @@
 .broadcastContainer {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   min-height: 100vh;
-  padding: 20px;
+  padding: 10px;
 }
 
 .broadcastCard {
   margin: 0 auto;
-  max-width: 1150px;
+  max-width: 1600px;
   background: rgba(255, 255, 255, 0.98);
   border-radius: 16px;
   overflow: hidden;
@@ -507,7 +507,7 @@
 }
 
 .channelHeader {
-  background: linear-gradient(135deg, #ff0000 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #fff;
   padding: 1.5rem 2rem;
   display: flex;
@@ -848,7 +848,7 @@
 }
 
 .attachButton {
-  background: linear-gradient(135deg, #ff0000 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
   border-radius: 12px;
   padding: 12px;
@@ -894,7 +894,7 @@
 }
 
 .sendButton {
-  background: linear-gradient(135deg, #ff0000 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
   border-radius: 50%;

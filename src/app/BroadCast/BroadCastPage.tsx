@@ -446,33 +446,15 @@ export default function BroadcastPage() {
     setCurrentImage(currentMessageImages[newIndex]);
   };
 
+  // Loading state
   if (loading) {
     return (
-      <div className="page-inner">
-        <div
-          className="d-flex justify-content-center align-items-center"
-          style={{
-            minHeight: "400px",
-            background: "linear-gradient(135deg, #ff0000 0%, #764ba2 100%)",
-            borderRadius: "12px",
-            color: "white",
-          }}
-        >
-          <div className="text-center">
-            <div
-              className="spinner-border mb-3"
-              role="status"
-              style={{
-                width: "3rem",
-                height: "3rem",
-                borderColor: "rgba(255,255,255,0.3)",
-                borderTopColor: "white",
-              }}
-            >
-              <span className="visually-hidden">Loading...</span>
-            </div>
-            <h5 className="fw-light">Loading community members...</h5>
+      <div className="container-fluid py-4">
+        <div className="text-center">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
           </div>
+          <p className="mt-3 text-muted">Loading Broadcast...</p>
         </div>
       </div>
     );

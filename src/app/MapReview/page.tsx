@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import dynamic from 'next/dynamic';
+import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import {
   BarChart,
   Bar,
@@ -10,23 +10,26 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
-} from 'recharts';
-import { DateTime } from 'luxon';
-import Chart from 'chart.js/auto';
-import 'chartjs-adapter-luxon';
+} from "recharts";
+import { DateTime } from "luxon";
+import Chart from "chart.js/auto";
+import "chartjs-adapter-luxon";
 
 // Dynamic import with SSR disabled
-const HeatmapComponent = dynamic(() => import('@/components/HeatmapComponent'), {
-  ssr: false,
-  loading: () => (
-    <div className="text-center py-8">
-      <div className="spinner-border text-primary" role="status">
-        <span className="visually-hidden">Loading heatmap...</span>
+const HeatmapComponent = dynamic(
+  () => import("@/components/HeatmapComponent"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="text-center py-8">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading heatmap...</span>
+        </div>
+        <p className="mt-2">Loading heatmap visualization...</p>
       </div>
-      <p className="mt-2">Loading heatmap visualization...</p>
-    </div>
-  ),
-});
+    ),
+  }
+);
 
 // Type definitions
 interface ReportWithSuburb {
@@ -59,8 +62,8 @@ interface StatusDataItem {
   suburb: string;
   Completed: number;
   Escalated: number;
-  'False report': number;
-  'On-Going': number;
+  "False report": number;
+  "On-Going": number;
   Abandoned: number;
 }
 
@@ -70,7 +73,7 @@ interface StatusRow {
   report_count: number;
 }
 
-type StatusKey = keyof Omit<StatusDataItem, 'suburb'>;
+type StatusKey = keyof Omit<StatusDataItem, "suburb">;
 
 interface FireIncident {
   suburbName: string;
@@ -80,11 +83,11 @@ interface FireIncident {
 }
 
 const reportTypes = [
-  'Crime',
-  'Fire',
-  'Natural Disaster',
-  'SOS',
-  'Suspicious Activity',
+  "Crime",
+  "Fire",
+  "Natural Disaster",
+  "SOS",
+  "Suspicious Activity",
 ] as const;
 
 interface FireIncidentApiResponse {
@@ -93,29 +96,35 @@ interface FireIncidentApiResponse {
   // Add other properties from the API response
 }
 const statusColors = {
-  Completed: '#10b981',
-  Escalated: '#f59e0b',
-  'False report': '#ef4444',
-  'On-Going': '#3b82f6',
-  Abandoned: '#9caa1dff',
+  Completed: "#10b981",
+  Escalated: "#f59e0b",
+  "False report": "#ef4444",
+  "On-Going": "#3b82f6",
+  Abandoned: "#9caa1dff",
 } as const;
 
 function isStatusKey(key: string): key is StatusKey {
-  return ['Completed', 'Escalated', 'False report', 'On-Going', 'Abandoned'].includes(key);
+  return [
+    "Completed",
+    "Escalated",
+    "False report",
+    "On-Going",
+    "Abandoned",
+  ].includes(key);
 }
 
 export default function CrimeHeatmapPage() {
   const [heatData, setHeatData] = useState<HeatPoint[]>([]);
   const [statusData, setStatusData] = useState<StatusDataItem[]>([]);
   const [suburbCounts, setSuburbCounts] = useState<SuburbCount[]>([]);
-  const [selectedType, setSelectedType] = useState<string>('Crime');
+  const [selectedType, setSelectedType] = useState<string>("Crime");
   const [totalReports, setTotalReports] = useState(0);
   const [uniqueSuburbCount, setUniqueSuburbCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [fireIncidents, setFireIncidents] = useState<FireIncident[]>([]);
   const [chartInstance, setChartInstance] = useState<Chart | null>(null);
-  const [selectedSuburb, setSelectedSuburb] = useState<string>('');
-  const [chartStatus, setChartStatus] = useState<string>('Loading data...');
+  const [selectedSuburb, setSelectedSuburb] = useState<string>("");
+  const [chartStatus, setChartStatus] = useState<string>("Loading data...");
 
   useEffect(() => {
     async function fetchReports() {
@@ -134,7 +143,7 @@ export default function CrimeHeatmapPage() {
           const points: HeatPoint[] = [];
 
           data.reports.forEach((report) => {
-            const [latStr, lngStr] = report.Report_Location.split(';');
+            const [latStr, lngStr] = report.Report_Location.split(";");
             const lat = parseFloat(latStr);
             const lng = parseFloat(lngStr);
             if (!isNaN(lat) && !isNaN(lng)) {
@@ -144,7 +153,7 @@ export default function CrimeHeatmapPage() {
           });
 
           Object.entries(pointMap).forEach(([key, count]) => {
-            const [lat, lng] = key.split(',').map(Number);
+            const [lat, lng] = key.split(",").map(Number);
             points.push({ lat, lng, intensity: count });
           });
 
@@ -168,16 +177,16 @@ export default function CrimeHeatmapPage() {
         if (statusJson.success && Array.isArray(statusJson.data)) {
           const pivot: Record<string, StatusDataItem> = {};
           statusJson.data.forEach((row: StatusRow) => {
-            const suburb = row.suburbName || 'Unknown';
-            const status = row.Report_Status || 'Unknown';
+            const suburb = row.suburbName || "Unknown";
+            const status = row.Report_Status || "Unknown";
 
             if (!pivot[suburb]) {
               pivot[suburb] = {
                 suburb,
                 Completed: 0,
                 Escalated: 0,
-                'False report': 0,
-                'On-Going': 0,
+                "False report": 0,
+                "On-Going": 0,
                 Abandoned: 0,
               };
             }
@@ -195,14 +204,15 @@ export default function CrimeHeatmapPage() {
               const totalCount =
                 item.Completed +
                 item.Escalated +
-                item['False report'] +
-                item['On-Going'] +
+                item["False report"] +
+                item["On-Going"] +
                 item.Abandoned;
 
               return {
                 suburb: item.suburb,
                 count: totalCount,
-                percentage: totalReports > 0 ? (totalCount / totalReports) * 100 : 0,
+                percentage:
+                  totalReports > 0 ? (totalCount / totalReports) * 100 : 0,
               };
             })
             .sort((a, b) => b.count - a.count);
@@ -214,34 +224,36 @@ export default function CrimeHeatmapPage() {
         }
 
         // Fetch fire incidents data if Fire is selected
-        if (selectedType === 'Crime') {
+        if (selectedType === "Crime") {
           const fireRes = await fetch(
-            'https://myappapi-yo3p.onrender.com/getDatesByEmergencyType?emergencyType=Crime'
+            "https://myappapi-yo3p.onrender.com/getDatesByEmergencyType?emergencyType=Crime"
           );
           const fireData = await fireRes.json();
 
           if (fireData.success && Array.isArray(fireData.data)) {
-            const incidents = fireData.data.map((incident: FireIncidentApiResponse) => ({
-              ...incident,
-              timestamp: new Date(incident.dateReported),
-              hour: new Date(incident.dateReported).getHours(),
-            }));
+            const incidents = fireData.data.map(
+              (incident: FireIncidentApiResponse) => ({
+                ...incident,
+                timestamp: new Date(incident.dateReported),
+                hour: new Date(incident.dateReported).getHours(),
+              })
+            );
             setFireIncidents(incidents);
             setChartStatus(`Loaded ${incidents.length} incidents`);
           } else {
             setFireIncidents([]);
-            setChartStatus('No Crime incidents available');
+            setChartStatus("No Crime incidents available");
           }
         }
       } catch (error) {
-        console.error('Error loading reports:', error);
+        console.error("Error loading reports:", error);
         setHeatData([]);
         setStatusData([]);
         setSuburbCounts([]);
         setTotalReports(0);
         setUniqueSuburbCount(0);
         setFireIncidents([]);
-        setChartStatus('Error loading data');
+        setChartStatus("Error loading data");
       } finally {
         setLoading(false);
       }
@@ -251,7 +263,7 @@ export default function CrimeHeatmapPage() {
   }, [selectedType]);
 
   useEffect(() => {
-    if (selectedType === 'Crime' && fireIncidents.length > 0) {
+    if (selectedType === "Crime" && fireIncidents.length > 0) {
       updateChart();
     }
 
@@ -264,7 +276,7 @@ export default function CrimeHeatmapPage() {
   }, [selectedSuburb, fireIncidents]);
 
   const updateChart = () => {
-    const ctx = document.getElementById('incidentChart') as HTMLCanvasElement;
+    const ctx = document.getElementById("incidentChart") as HTMLCanvasElement;
     if (!ctx) return;
 
     // Filter incidents if suburb is selected
@@ -280,17 +292,19 @@ export default function CrimeHeatmapPage() {
       setChartStatus(
         selectedSuburb
           ? `No incidents found in ${selectedSuburb}`
-          : 'No incidents available'
+          : "No incidents available"
       );
       return;
     }
 
     // Group incidents by hour
-    const hourlyCounts = Array(24).fill(0).map((_, i) => ({
-      hour: i,
-      count: 0,
-      suburbs: new Set<string>(),
-    }));
+    const hourlyCounts = Array(24)
+      .fill(0)
+      .map((_, i) => ({
+        hour: i,
+        count: 0,
+        suburbs: new Set<string>(),
+      }));
 
     filteredIncidents.forEach((incident) => {
       hourlyCounts[incident.hour].count++;
@@ -299,10 +313,12 @@ export default function CrimeHeatmapPage() {
 
     // Prepare chart data
     const labels = hourlyCounts.map((item) =>
-      DateTime.fromObject({ hour: item.hour }).toFormat('h a')
+      DateTime.fromObject({ hour: item.hour }).toFormat("h a")
     );
     const dataPoints = hourlyCounts.map((item) => item.count);
-    const suburbCounts = hourlyCounts.map((item) => Array.from(item.suburbs).join(', '));
+    const suburbCounts = hourlyCounts.map((item) =>
+      Array.from(item.suburbs).join(", ")
+    );
 
     // Create or update chart
     if (chartInstance) {
@@ -310,17 +326,17 @@ export default function CrimeHeatmapPage() {
     }
 
     const newChartInstance = new Chart(ctx, {
-      type: 'line',
+      type: "line",
       data: {
         labels: labels,
         datasets: [
           {
-            label: selectedSuburb || 'All Suburbs',
+            label: selectedSuburb || "All Suburbs",
             data: dataPoints,
-            backgroundColor: 'rgba(220, 53, 69, 0.2)',
-            borderColor: 'rgba(220, 53, 69, 1)',
+            backgroundColor: "rgba(220, 53, 69, 0.2)",
+            borderColor: "rgba(220, 53, 69, 1)",
             borderWidth: 3,
-            pointBackgroundColor: 'rgba(220, 53, 69, 1)',
+            pointBackgroundColor: "rgba(220, 53, 69, 1)",
             pointRadius: 4,
             pointHoverRadius: 6,
             fill: true,
@@ -336,9 +352,9 @@ export default function CrimeHeatmapPage() {
             beginAtZero: true,
             title: {
               display: true,
-              text: 'Number of Incidents',
+              text: "Number of Incidents",
               font: {
-                weight: 'bold',
+                weight: "bold",
               },
             },
             ticks: {
@@ -348,9 +364,9 @@ export default function CrimeHeatmapPage() {
           x: {
             title: {
               display: true,
-              text: 'Hour of Day',
+              text: "Hour of Day",
               font: {
-                weight: 'bold',
+                weight: "bold",
               },
             },
           },
@@ -364,14 +380,14 @@ export default function CrimeHeatmapPage() {
                   const suburbs = suburbCounts[hourIndex];
                   return `Suburbs: ${suburbs}`;
                 }
-                return '';
+                return "";
               },
             },
           },
         },
         elements: {
           line: {
-            borderJoinStyle: 'round',
+            borderJoinStyle: "round",
           },
         },
       },
@@ -387,17 +403,19 @@ export default function CrimeHeatmapPage() {
 
   const getReportIcon = (type: string) => {
     const icons: Record<string, string> = {
-      Crime: 'fas fa-shield-alt',
-      Fire: 'fas fa-fire',
-      'Natural Disaster': 'fas fa-tornado',
-      SOS: 'fas fa-exclamation-triangle',
-      'Suspicious Activity': 'fas fa-eye',
+      Crime: "fas fa-shield-alt",
+      Fire: "fas fa-fire",
+      "Natural Disaster": "fas fa-tornado",
+      SOS: "fas fa-exclamation-triangle",
+      "Suspicious Activity": "fas fa-eye",
     };
-    return icons[type] || 'fas fa-chart-bar';
+    return icons[type] || "fas fa-chart-bar";
   };
 
   const renderStats = () => {
-    const avgPerArea = uniqueSuburbCount ? (totalReports / uniqueSuburbCount).toFixed(1) : '0';
+    const avgPerArea = uniqueSuburbCount
+      ? (totalReports / uniqueSuburbCount).toFixed(1)
+      : "0";
 
     return (
       <div className="d-flex gap-2">
@@ -424,7 +442,7 @@ export default function CrimeHeatmapPage() {
         onChange={(e) => setSelectedType(e.target.value)}
         className="form-select"
         disabled={loading}
-        style={{ minWidth: '180px' }}
+        style={{ minWidth: "180px" }}
       >
         {reportTypes.map((type) => (
           <option key={type} value={type}>
@@ -436,7 +454,7 @@ export default function CrimeHeatmapPage() {
   );
 
   const suburbOptions = [
-    { value: '', label: 'All Suburbs' },
+    { value: "", label: "All Suburbs" },
     ...Array.from(new Set(fireIncidents.map((item) => item.suburbName)))
       .sort((a, b) => a.localeCompare(b))
       .map((suburb) => ({ value: suburb, label: suburb })),
@@ -470,7 +488,8 @@ export default function CrimeHeatmapPage() {
 
         .card {
           border: none;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+            0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
         .card-header {
@@ -617,7 +636,9 @@ export default function CrimeHeatmapPage() {
                 <i className={`${getReportIcon(selectedType)} me-2`}></i>
                 {selectedType} Analytics Dashboard
               </h3>
-              <p className="mb-0 opacity-75">Real-time incident monitoring and analysis</p>
+              <p className="mb-0 opacity-75">
+                Real-time incident monitoring and analysis
+              </p>
             </div>
 
             <div className="d-flex gap-3 align-items-center">
@@ -637,7 +658,9 @@ export default function CrimeHeatmapPage() {
                 <div className="card metric-card">
                   <div className="card-body text-center">
                     <i className="fas fa-file-alt fs-2 text-primary mb-2"></i>
-                    <h4 className="text-primary mb-1">{totalReports.toLocaleString()}</h4>
+                    <h4 className="text-primary mb-1">
+                      {totalReports.toLocaleString()}
+                    </h4>
                     <p className="text-muted mb-0">Total Reports</p>
                   </div>
                 </div>
@@ -656,7 +679,9 @@ export default function CrimeHeatmapPage() {
                   <div className="card-body text-center">
                     <i className="fas fa-chart-line fs-2 text-warning mb-2"></i>
                     <h4 className="text-warning mb-1">
-                      {uniqueSuburbCount ? (totalReports / uniqueSuburbCount).toFixed(1) : '0'}
+                      {uniqueSuburbCount
+                        ? (totalReports / uniqueSuburbCount).toFixed(1)
+                        : "0"}
                     </h4>
                     <p className="text-muted mb-0">Average per Area</p>
                   </div>
@@ -724,27 +749,27 @@ export default function CrimeHeatmapPage() {
                         <Bar
                           dataKey="Completed"
                           stackId="a"
-                          fill={statusColors['Completed']}
+                          fill={statusColors["Completed"]}
                         />
                         <Bar
                           dataKey="Escalated"
                           stackId="a"
-                          fill={statusColors['Escalated']}
+                          fill={statusColors["Escalated"]}
                         />
                         <Bar
                           dataKey="False report"
                           stackId="a"
-                          fill={statusColors['False report']}
+                          fill={statusColors["False report"]}
                         />
                         <Bar
                           dataKey="On-Going"
                           stackId="a"
-                          fill={statusColors['On-Going']}
+                          fill={statusColors["On-Going"]}
                         />
                         <Bar
                           dataKey="Abandoned"
                           stackId="a"
-                          fill={statusColors['Abandoned']}
+                          fill={statusColors["Abandoned"]}
                         />
                       </BarChart>
                     </ResponsiveContainer>
@@ -767,15 +792,15 @@ export default function CrimeHeatmapPage() {
                 <div className="card-body p-0">
                   <div className="affected-areas-list">
                     {suburbCounts.map((item, index) => {
-                      let riskClass = 'low-risk';
-                      let riskIcon = 'fas fa-check-circle text-success';
+                      let riskClass = "low-risk";
+                      let riskIcon = "fas fa-check-circle text-success";
 
                       if (item.percentage >= 10) {
-                        riskClass = 'high-risk';
-                        riskIcon = 'fas fa-exclamation-triangle text-danger';
+                        riskClass = "high-risk";
+                        riskIcon = "fas fa-exclamation-triangle text-danger";
                       } else if (item.percentage >= 5) {
-                        riskClass = 'medium-risk';
-                        riskIcon = 'fas fa-exclamation-circle text-warning';
+                        riskClass = "medium-risk";
+                        riskIcon = "fas fa-exclamation-circle text-warning";
                       }
 
                       return (
@@ -786,13 +811,19 @@ export default function CrimeHeatmapPage() {
                           <div className="d-flex justify-content-between align-items-start">
                             <div className="flex-grow-1">
                               <div className="d-flex align-items-center mb-2">
-                                <span className="badge bg-secondary me-2">#{index + 1}</span>
-                                <h6 className="mb-0 fw-semibold">{item.suburb}</h6>
+                                <span className="badge bg-secondary me-2">
+                                  #{index + 1}
+                                </span>
+                                <h6 className="mb-0 fw-semibold">
+                                  {item.suburb}
+                                </h6>
                                 <i className={`${riskIcon} ms-2`}></i>
                               </div>
 
                               <div className="d-flex justify-content-between align-items-center mb-2">
-                                <span className="text-muted small">{item.count} reports</span>
+                                <span className="text-muted small">
+                                  {item.count} reports
+                                </span>
                                 <span className="fw-bold text-primary">
                                   {item.percentage.toFixed(1)}%
                                 </span>
@@ -802,14 +833,17 @@ export default function CrimeHeatmapPage() {
                                 <div
                                   className={`progress-bar ${
                                     item.percentage >= 10
-                                      ? 'bg-danger'
+                                      ? "bg-danger"
                                       : item.percentage >= 5
-                                      ? 'bg-warning'
-                                      : 'bg-success'
+                                      ? "bg-warning"
+                                      : "bg-success"
                                   }`}
                                   role="progressbar"
                                   style={{
-                                    width: `${Math.min(item.percentage * 2, 100)}%`,
+                                    width: `${Math.min(
+                                      item.percentage * 2,
+                                      100
+                                    )}%`,
                                   }}
                                 ></div>
                               </div>
@@ -830,7 +864,7 @@ export default function CrimeHeatmapPage() {
           )}
 
           {/* Hourly Fire Incidents */}
-          {selectedType === 'Crime' && (
+          {selectedType === "Crime" && (
             <div className="col-12">
               <div className="card mt-4">
                 <div className="card-header text-white py-3">
@@ -867,7 +901,7 @@ export default function CrimeHeatmapPage() {
                       </div>
                     </div>
 
-                    <div id="chartContainer" style={{ height: '500px' }}>
+                    <div id="chartContainer" style={{ height: "500px" }}>
                       <canvas id="incidentChart"></canvas>
                     </div>
                   </div>

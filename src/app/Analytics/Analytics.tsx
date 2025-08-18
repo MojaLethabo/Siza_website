@@ -9,14 +9,16 @@ export default function Analytics() {
   const incidentsRef = useRef<HTMLCanvasElement>(null);
   const timeRef = useRef<HTMLCanvasElement>(null);
   const typeRef = useRef<HTMLCanvasElement>(null);
-  const respondersRef = useRef<HTMLCanvasElement>(null);
+  //const respondersRef = useRef<HTMLCanvasElement>(null);
   const funnelRef = useRef<HTMLCanvasElement>(null);
   const messagesRef = useRef<HTMLCanvasElement>(null);
   const messagesChartRef = useRef<Chart | null>(null);
   const pathname = usePathname();
   const isAnalyticsPage = pathname === "/Analytics";
 
-  const [timeFrame, setTimeFrame] = useState<"day" | "week" | "month" | "year">("month");
+  const [timeFrame, setTimeFrame] = useState<"day" | "week" | "month" | "year">(
+    "month"
+  );
   const [isTimeFrameOpen, setIsTimeFrameOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -42,7 +44,7 @@ export default function Analytics() {
   const incidentsChartRef = useRef<Chart | null>(null);
   const timeChartRef = useRef<Chart | null>(null);
   const typeChartRef = useRef<Chart | null>(null);
-  const respondersChartRef = useRef<Chart | null>(null);
+  //const respondersChartRef = useRef<Chart | null>(null);
   const funnelChartRef = useRef<Chart | null>(null);
 
   const BASE =
@@ -175,9 +177,10 @@ export default function Analytics() {
               "Fire",
               "Natural Disaster",
               "SOS",
+              "Suspicious Activity",
               "Other",
             ],
-            data: [200, 150, 100, 80, 30, 10],
+            data: [200, 150, 100, 80, 30, 2, 10],
           };
 
       const respondersData = respondersRes.ok
@@ -243,9 +246,10 @@ export default function Analytics() {
             "Fire",
             "Natural Disaster",
             "SOS",
+            "Suspicious Activity",
             "Other",
           ],
-          data: [200, 150, 100, 80, 30, 10],
+          data: [200, 150, 100, 80, 30, 2, 10],
         },
         responders: {
           labels: [
@@ -276,7 +280,7 @@ export default function Analytics() {
     if (incidentsChartRef.current) incidentsChartRef.current.destroy();
     if (timeChartRef.current) timeChartRef.current.destroy();
     if (typeChartRef.current) typeChartRef.current.destroy();
-    if (respondersChartRef.current) respondersChartRef.current.destroy();
+    //if (respondersChartRef.current) respondersChartRef.current.destroy();
     if (funnelChartRef.current) funnelChartRef.current.destroy();
 
     const commonOptions = {
@@ -442,6 +446,8 @@ export default function Analytics() {
                   colorPalette.chart.orange,
                   colorPalette.chart.purple,
                   colorPalette.chart.teal,
+                  colorPalette.chart.yellow,
+                  colorPalette.chart.pink,
                 ],
                 borderColor: [
                   colorPalette.chart.red,
@@ -449,6 +455,8 @@ export default function Analytics() {
                   colorPalette.chart.orange,
                   colorPalette.chart.purple,
                   colorPalette.chart.teal,
+                  colorPalette.chart.yellow,
+                  colorPalette.chart.pink,
                 ],
                 borderWidth: 2,
                 borderRadius: 8,
@@ -485,7 +493,7 @@ export default function Analytics() {
       }
     }
 
-    if (respondersRef.current) {
+    /*if (respondersRef.current) {
       const ctx = respondersRef.current.getContext("2d");
       if (ctx) {
         respondersChartRef.current = new Chart(ctx, {
@@ -526,7 +534,7 @@ export default function Analytics() {
         });
         renderHTMLLegend(respondersChartRef.current, "respondersLegend");
       }
-    }
+    }*/
 
     if (funnelRef.current) {
       const ctx = funnelRef.current.getContext("2d");
@@ -672,7 +680,7 @@ export default function Analytics() {
       if (incidentsChartRef.current) incidentsChartRef.current.destroy();
       if (timeChartRef.current) timeChartRef.current.destroy();
       if (typeChartRef.current) typeChartRef.current.destroy();
-      if (respondersChartRef.current) respondersChartRef.current.destroy();
+      //if (respondersChartRef.current) respondersChartRef.current.destroy();
       if (funnelChartRef.current) funnelChartRef.current.destroy();
     };
   }, []);
@@ -702,7 +710,7 @@ export default function Analytics() {
           font-weight: 600;
           color: white;
         }
-        
+
         .avatar {
           width: 40px;
           height: 40px;
@@ -715,79 +723,81 @@ export default function Analytics() {
           font-weight: bold;
           font-size: 1rem;
         }
-        
+
         .status-indicator {
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 8px;
         }
-        
+
         .status-dot {
           width: 8px;
           height: 8px;
           border-radius: 50%;
         }
-        
+
         .status-dot.active {
           background-color: #28a745;
           box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.25);
         }
-        
+
         .status-dot.inactive {
           background-color: #dc3545;
           box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
         }
-        
+
         .table th {
           background-color: #f8f9fa;
           border-bottom: 2px solid #dee2e6;
           font-weight: 600;
           color: #495057;
         }
-        
+
         .card {
           border: none;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+            0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
-        
+
         .card-header {
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           border-bottom: none;
         }
-        
+
         .chart-container {
           position: relative;
           height: 300px;
           margin-bottom: 1rem;
         }
-        
+
         .legend-container {
           display: flex;
           flex-wrap: wrap;
           justify-content: center;
           margin-top: 1rem;
         }
-        
+
         .legend-item {
           display: inline-flex;
           align-items: center;
           margin-right: 1rem;
           margin-bottom: 0.5rem;
         }
-        
+
         .legend-color {
           display: inline-block;
           width: 14px;
           height: 14px;
           margin-right: 8px;
           border-radius: 3px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .dropdown-menu {
           border: none;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+            0 2px 4px -1px rgba(0, 0, 0, 0.06);
           border-radius: 8px;
           padding: 0.5rem;
         }
@@ -820,10 +830,11 @@ export default function Analytics() {
                   Analytics Dashboard
                 </h3>
                 <p className="mb-0 opacity-75">
-                  Real-time insights and performance metrics for your community safety platform
+                  Real-time insights and performance metrics for your community
+                  safety platform
                 </p>
               </div>
-              
+
               <div className="d-flex gap-3 align-items-center">
                 <div className="stat-badge">
                   <i className="fas fa-exclamation-circle me-1"></i>
@@ -833,18 +844,20 @@ export default function Analytics() {
                   <i className="fas fa-check-circle me-1"></i>
                   {chartData.overview.resolved} Resolved
                 </div>
-                
+
                 <div className="dropdown">
                   <button
                     className="btn btn-light btn-sm dropdown-toggle"
                     type="button"
                     onClick={() => setIsTimeFrameOpen(!isTimeFrameOpen)}
-                    style={{ minWidth: '120px' }}
+                    style={{ minWidth: "120px" }}
                   >
                     <i className="fas fa-calendar me-1"></i>
                     {timeFrame.charAt(0).toUpperCase() + timeFrame.slice(1)}
                   </button>
-                  <div className={`dropdown-menu ${isTimeFrameOpen ? 'show' : ''}`}>
+                  <div
+                    className={`dropdown-menu ${isTimeFrameOpen ? "show" : ""}`}
+                  >
                     <button
                       className="dropdown-item"
                       onClick={() => {
@@ -900,7 +913,9 @@ export default function Analytics() {
                   </div>
                   <div>
                     <h5 className="mb-0">Incidents Overview</h5>
-                    <small className="opacity-75">Comprehensive breakdown of incident statistics</small>
+                    <small className="opacity-75">
+                      Comprehensive breakdown of incident statistics
+                    </small>
                   </div>
                 </div>
               </div>
@@ -923,7 +938,9 @@ export default function Analytics() {
                   </div>
                   <div>
                     <h5 className="mb-0">Reports Trend</h5>
-                    <small className="opacity-75">Historical reporting patterns and trends</small>
+                    <small className="opacity-75">
+                      Historical reporting patterns and trends
+                    </small>
                   </div>
                 </div>
               </div>
@@ -944,7 +961,9 @@ export default function Analytics() {
                   </div>
                   <div>
                     <h5 className="mb-0">Report Categories</h5>
-                    <small className="opacity-75">Distribution of incident types and categories</small>
+                    <small className="opacity-75">
+                      Distribution of incident types and categories
+                    </small>
                   </div>
                 </div>
               </div>
@@ -957,7 +976,7 @@ export default function Analytics() {
             </div>
           </div>
 
-          {/* Top Responders and Lifecycle */}
+          {/* Top Responders and Lifecycle 
           <div className="col-lg-6">
             <div className="card h-100">
               <div className="card-header text-white py-3">
@@ -967,7 +986,9 @@ export default function Analytics() {
                   </div>
                   <div>
                     <h5 className="mb-0">Top Responders</h5>
-                    <small className="opacity-75">Most active community response members</small>
+                    <small className="opacity-75">
+                      Most active community response members
+                    </small>
                   </div>
                 </div>
               </div>
@@ -978,6 +999,66 @@ export default function Analytics() {
                 <div id="respondersLegend" className="legend-container"></div>
               </div>
             </div>
+          </div>*/}
+          {/* Top Responders - Changed to list view */}
+          <div className="col-lg-6">
+            <div className="card h-100">
+              <div className="card-header text-white py-3">
+                <div className="d-flex align-items-center">
+                  <div className="avatar me-3">
+                    <i className="fas fa-medal"></i>
+                  </div>
+                  <div>
+                    <h5 className="mb-0">Top Responders</h5>
+                    <small className="opacity-75">
+                      Most active community response members
+                    </small>
+                  </div>
+                </div>
+              </div>
+              <div className="card-body">
+                {chartData.responders.labels.length === 0 ? (
+                  <p className="text-center text-muted my-4">
+                    No responder data available
+                  </p>
+                ) : (
+                  <div className="list-group">
+                    {chartData.responders.labels.map((label, index) => {
+                      // Parse responder info from label
+                      const name = label.split("(")[0].trim();
+                      const id = label.match(/ID: (\d+)\)/)?.[1] || "N/A";
+
+                      return (
+                        <div
+                          key={index}
+                          className="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                        >
+                          <div className="d-flex align-items-center">
+                            <div className="position-relative me-3">
+                              <div className="avatar-sm">
+                                <div className="avatar-title bg-primary bg-gradient rounded-circle">
+                                  <i className="fas fa-user"></i>
+                                </div>
+                              </div>
+                              <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {index + 1}
+                              </span>
+                            </div>
+                            <div>
+                              <h6 className="mb-0">{name}</h6>
+                              <small className="text-muted">ID: {id}</small>
+                            </div>
+                          </div>
+                          <span className="badge bg-primary bg-gradient rounded-pill">
+                            {chartData.responders.data[index]} responses
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="col-lg-6">
@@ -985,11 +1066,13 @@ export default function Analytics() {
               <div className="card-header text-white py-3">
                 <div className="d-flex align-items-center">
                   <div className="avatar me-3">
-                    <i className="fas fa-funnel-dollar"></i>
+                    <i className="fas fa-briefcase-medical"></i>
                   </div>
                   <div>
                     <h5 className="mb-0">Request Lifecycle</h5>
-                    <small className="opacity-75">Journey from report to resolution</small>
+                    <small className="opacity-75">
+                      Journey from report to resolution
+                    </small>
                   </div>
                 </div>
               </div>
@@ -1012,7 +1095,9 @@ export default function Analytics() {
                   </div>
                   <div>
                     <h5 className="mb-0">Broadcast Messages</h5>
-                    <small className="opacity-75">Channel message analytics and moderation status</small>
+                    <small className="opacity-75">
+                      Channel message analytics and moderation status
+                    </small>
                   </div>
                 </div>
               </div>
