@@ -671,15 +671,14 @@ function ReportContent() {
                         .map((img, idx) => (
                           <div key={idx} className="col-sm-6">
                             <div className="position-relative overflow-hidden rounded border">
-                              <Image
-                                src={`data:image/jpeg;base64,${img}`}
-                                alt={`Emergency photo ${idx + 1}`}
-                                width={500}
-                                height={300}
-                                className="img-fluid"
-                                style={{ height: '200px', objectFit: 'cover' }}
-                                unoptimized
-                              />
+                             <Image
+  src={`data:image/jpeg;base64,${img}`}
+  alt={`Emergency photo ${idx + 1}`}
+  width={500}
+  height={300}
+  className="img-fluid"
+  unoptimized
+/>
                             </div>
                           </div>
                         ))}
@@ -741,6 +740,7 @@ function ReportContent() {
               <div className="card-body">
                 <div className="d-flex gap-3 mb-4">
                   {reporter.ProfilePhoto ? (
+                    
                     <Image
                       src={
                         reporter.ProfilePhoto.startsWith("http")
@@ -801,39 +801,12 @@ function ReportContent() {
                     })}
                   </small>
                 </div>
-                <div className="timeline-item text-warning mb-3">
-                  <h6 className="fw-semibold mb-1">Authorities Notified</h6>
-                  <small className="text-muted">
-                    {formatDistanceToNowStrict(new Date(new Date(createdAt).getTime() + 2 * 60 * 1000), {
-                      addSuffix: true,
-                    })}
-                  </small>
-                </div>
-                <div className="timeline-item text-primary">
-                  <h6 className="fw-semibold mb-1">Response Team Assigned</h6>
-                  <small className="text-muted">Awaiting update</small>
-                </div>
+
               </div>
             </div>
 
             {/* Priority Status Card */}
-            <div className="card border-danger">
-              <div className="card-body">
-                <div className="d-flex align-items-center gap-3 mb-3">
-                  <div className="avatar-sm bg-danger bg-opacity-10 d-flex align-items-center justify-content-center rounded">
-                    <i className="fas fa-exclamation-triangle text-danger"></i>
-                  </div>
-                  <h6 className="fw-semibold text-danger mb-0">High Priority Alert</h6>
-                </div>
-                <p className="text-danger mb-3 small">
-                  This emergency requires immediate attention from response teams.
-                </p>
-                <div className="d-flex align-items-center gap-2 text-danger">
-                  <i className="fas fa-clock"></i>
-                  <small>Response time: &lt; 5 minutes</small>
-                </div>
-              </div>
-            </div>
+           
           </div>
         </div>
 
