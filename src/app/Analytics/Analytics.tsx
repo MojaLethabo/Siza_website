@@ -1069,7 +1069,7 @@ export default function Analytics() {
                     <i className="fas fa-briefcase-medical"></i>
                   </div>
                   <div>
-                    <h5 className="mb-0">Request Lifecycle</h5>
+                    <h5 className="mb-0">Reports Status Breakdown</h5>
                     <small className="opacity-75">
                       Journey from report to resolution
                     </small>

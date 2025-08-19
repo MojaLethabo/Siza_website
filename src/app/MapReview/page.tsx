@@ -674,7 +674,7 @@ export default function CrimeHeatmapPage() {
                   </div>
                 </div>
               </div>
-              <div className="col-md-4">
+            {/*}  <div className="col-md-4">
                 <div className="card metric-card">
                   <div className="card-body text-center">
                     <i className="fas fa-chart-line fs-2 text-warning mb-2"></i>
@@ -686,7 +686,7 @@ export default function CrimeHeatmapPage() {
                     <p className="text-muted mb-0">Average per Area</p>
                   </div>
                 </div>
-              </div>
+              </div>*/}
             </div>
           </div>
 

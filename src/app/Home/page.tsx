@@ -84,7 +84,7 @@ export default function HomePage() {
     async function fetchCommunityMemberCount() {
       try {
         const res = await fetch(
-          "https://myappapi-yo3p.onrender.com/community/count"
+          "https://myappapi-yo3p.onrender.com/api/community/count"
         );
         const data = await res.json();
         if (data.success) {
@@ -170,7 +170,7 @@ export default function HomePage() {
           },
           {
             title: "Active members",
-            count: "1",
+            count: "254",
             icon: "fas fa-user-check",
             color: "text-green-600",
           },
