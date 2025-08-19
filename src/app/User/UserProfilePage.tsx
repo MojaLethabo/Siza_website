@@ -515,11 +515,11 @@ const getPriorityLevel = (type: EmergencyType) => {
                       <div className="completion-bar mb-2">
                         <div 
                           className="completion-fill"
-                          style={{ width: `${(stats.completed / stats.total) * 100}%` }}
+                          style={{ width: `${((stats.completed + stats.escalated)/ stats.total) * 100}%` }}
                         ></div>
                       </div>
                       <small className="text-success fw-bold">
-                        {Math.round((stats.completed / stats.total) * 100)}% Complete
+                        {Math.round(((stats.completed + stats.escalated )/ stats.total) * 100)}% Complete
                       </small>
                     </div>
                   </>

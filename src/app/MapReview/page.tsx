@@ -870,7 +870,7 @@ export default function CrimeHeatmapPage() {
                 <div className="card-header text-white py-3">
                   <h4 className="mb-0">
                     <i className="fas fa-clock me-2"></i>
-                    Hourly Fire Incidents
+                    Hourly Crime Incidents
                   </h4>
                 </div>
                 <div className="card-body">

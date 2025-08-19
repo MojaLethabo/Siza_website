@@ -19,7 +19,6 @@ interface CommunityMember {
   Role: string;
   flagCount: number;
   misuseCount: number;
-
 }
 
 interface MisuseReport {
@@ -51,9 +50,11 @@ const CommunityMemberManagement = () => {
   
   // State management
   const [members, setMembers] = useState<CommunityMember[]>([]);
+  const [filteredMembers, setFilteredMembers] = useState<CommunityMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   
   // Modal states
   const [showSleepModal, setShowSleepModal] = useState(false);
@@ -104,84 +105,103 @@ const CommunityMemberManagement = () => {
       );
 
       setMembers(updatedVolunteers);
-    }  catch (err: unknown) {
-                const error = err instanceof Error ? err.message : "Error fetching volunteers:";
+      setFilteredMembers(updatedVolunteers);
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err.message : "Error fetching volunteers:";
       setError(error || "Failed to load community members");
     } finally {
       setLoading(false);
     }
   };
 
+  // Search functionality
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredMembers(members);
+      setCurrentPage(1);
+      return;
+    }
+
+    const lowercasedSearch = searchTerm.toLowerCase();
+    const filtered = members.filter(member => 
+      member.FullName.toLowerCase().includes(lowercasedSearch) ||
+      member.Email.toLowerCase().includes(lowercasedSearch) ||
+      member.UserID.toString().includes(lowercasedSearch) ||
+      member.PhoneNumber?.includes(lowercasedSearch)
+    );
+
+    setFilteredMembers(filtered);
+    setCurrentPage(1);
+  }, [searchTerm, members]);
+
   // Modal handlers
   const handleOpenMisuseModal = async (userId: number) => {
-   try {
-    const response = await fetch(`${BASE}/api/misuses/user/${userId}`);
-    if (!response.ok) throw new Error("Failed to fetch misuse details");
-    
-    const data = await response.json();
-    
-    // Transform the API response to match MisuseReport
-    const misuses: MisuseReport[] = data.map((item: {
-      id: number;
-      type?: string;
-      status?: string;
-      description?: string;
-      reporters?: string[];
-      reporter_count?: number;
-      created_at?: string;
-      resolution_status?: string;
-    }) => ({
-      MisuseID: item.id,
-      ReportType: item.type || 'Unknown',
-      Status: item.status || 'Pending',
-      InitialDescription: item.description || 'No description provided',
-      Filers: item.reporters?.join(', ') || 'Anonymous',
-      FilerCount: item.reporter_count || 1,
-      CreatedAt: item.created_at || new Date().toISOString(),
-      MisuseStatus: item.resolution_status || 'Pending'
-    }));
-    
-    setSelectedMisuses(misuses);
-    setShowMisuseModal(true);
-  } catch (err: unknown) {
-    const error = err instanceof Error ? err.message : "Failed to load misuse details";
-    console.error("Error fetching misuses:", error);
-    setError(error);
-  }
+    try {
+      const response = await fetch(`${BASE}/api/misuses/user/${userId}`);
+      if (!response.ok) throw new Error("Failed to fetch misuse details");
+      
+      const data = await response.json();
+      
+      const misuses: MisuseReport[] = data.map((item: {
+        id: number;
+        type?: string;
+        status?: string;
+        description?: string;
+        reporters?: string[];
+        reporter_count?: number;
+        created_at?: string;
+        resolution_status?: string;
+      }) => ({
+        MisuseID: item.id,
+        ReportType: item.type || 'Unknown',
+        Status: item.status || 'Pending',
+        InitialDescription: item.description || 'No description provided',
+        Filers: item.reporters?.join(', ') || 'Anonymous',
+        FilerCount: item.reporter_count || 1,
+        CreatedAt: item.created_at || new Date().toISOString(),
+        MisuseStatus: item.resolution_status || 'Pending'
+      }));
+      
+      setSelectedMisuses(misuses);
+      setShowMisuseModal(true);
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err.message : "Failed to load misuse details";
+      console.error("Error fetching misuses:", error);
+      setError(error);
+    }
   };
 
   const handleOpenFlagModal = async (userId: number) => {
-   try {
-    const response = await fetch(`${BASE}/api/flags/user/${userId}`);
-    if (!response.ok) throw new Error("Failed to fetch flag details");
-    
-    const apiFlags = await response.json();
-    
-    // Transform API response to match Flag interface
-    const flags: Flag[] = apiFlags.map((item: {
-      id: number;
-      type?: string;
-      description?: string;
-      created_at?: string;
-      reporter_name?: string;
-      reporter?: { name?: string };
-      status?: string;
-    }) => ({
-      FlagID: item.id,
-      FlagType: item.type || 'General',
-      Description: item.description,
-      CreatedAt: item.created_at,
-      ReporterName: item.reporter_name || item.reporter?.name || 'Anonymous',
-      Status: item.status || 'Pending'
-    }));
-    
-    setSelectedFlags(flags);
-    setShowFlagModal(true);
-  } catch (err: unknown) {
-    const error = err instanceof Error ? err.message : "Failed to load flag details";
-    console.error("Error fetching flags:", error);
-    setError(error);
-  }
+    try {
+      const response = await fetch(`${BASE}/api/flags/user/${userId}`);
+      if (!response.ok) throw new Error("Failed to fetch flag details");
+      
+      const apiFlags = await response.json();
+      
+      const flags: Flag[] = apiFlags.map((item: {
+        id: number;
+        type?: string;
+        description?: string;
+        created_at?: string;
+        reporter_name?: string;
+        reporter?: { name?: string };
+        status?: string;
+      }) => ({
+        FlagID: item.id,
+        FlagType: item.type || 'General',
+        Description: item.description,
+        CreatedAt: item.created_at,
+        ReporterName: item.reporter_name || item.reporter?.name || 'Anonymous',
+        Status: item.status || 'Pending'
+      }));
+      
+      setSelectedFlags(flags);
+      setShowFlagModal(true);
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err.message : "Failed to load flag details";
+      console.error("Error fetching flags:", error);
+      setError(error);
+    }
   };
 
   const handleSleepUser = async (userId: number, durationHours: number, sleepType: string) => {
@@ -205,16 +225,19 @@ const CommunityMemberManagement = () => {
           member.UserID === userId ? { ...member, isActive: false } : member
         )
       );
+      setFilteredMembers(prevMembers =>
+        prevMembers.map(member =>
+          member.UserID === userId ? { ...member, isActive: false } : member
+        )
+      );
 
       setShowSleepModal(false);
     } catch (err: unknown) {
-  const error = err instanceof Error ? err.message : "Error putting user to sleep:";
-  setError(error|| "Failed to put user to sleep");
-    
+      const error = err instanceof Error ? err.message : "Error putting user to sleep:";
+      setError(error|| "Failed to put user to sleep");
     }
   };
 
-  // Utility functions
   const getStatusIcon = (count: number, type: 'flag' | 'misuse') => {
     const configs = {
       flag: {
@@ -246,8 +269,7 @@ const CommunityMemberManagement = () => {
     return config.icons[3];
   };
 
-  // Sorting and pagination
-  const sortedMembers = [...members].sort((a, b) => {
+  const sortedMembers = [...filteredMembers].sort((a, b) => {
     switch (sortBy) {
       case "Name":
         return a.FullName.localeCompare(b.FullName);
@@ -262,24 +284,22 @@ const CommunityMemberManagement = () => {
     }
   });
 
-  const totalPages = Math.ceil(members.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredMembers.length / itemsPerPage);
   const currentItems = sortedMembers.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  // Effects
   useEffect(() => {
     if (isManageUsersPage && currentUser?.UserID) {
       fetchVolunteers();
     }
   }, [currentUser, isManageUsersPage]);
 
-  // Render components
   const renderStats = () => {
-    const activeMembers = members.filter(m => m.isActive).length;
-    const totalFlags = members.reduce((sum, m) => sum + m.flagCount, 0);
-    const totalMisuses = members.reduce((sum, m) => sum + m.misuseCount, 0);
+    const activeMembers = filteredMembers.filter(m => m.isActive).length;
+    const totalFlags = filteredMembers.reduce((sum, m) => sum + m.flagCount, 0);
+    const totalMisuses = filteredMembers.reduce((sum, m) => sum + m.misuseCount, 0);
 
     return (
       <div className="d-flex gap-2">
@@ -298,6 +318,29 @@ const CommunityMemberManagement = () => {
       </div>
     );
   };
+
+  const renderSearchInput = () => (
+    <div className="search-container position-relative">
+      <i className="fas fa-search position-absolute" style={{ top: '10px', left: '12px', color: '#6c757d' }}></i>
+      <input
+        type="text"
+        className="form-control ps-35"
+        placeholder="Search members..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        style={{ minWidth: '250px', paddingLeft: '35px' }}
+      />
+      {searchTerm && (
+        <button
+          className="btn btn-link position-absolute"
+          style={{ top: '8px', right: '10px', color: '#6c757d' }}
+          onClick={() => setSearchTerm('')}
+        >
+          <i className="fas fa-times"></i>
+        </button>
+      )}
+    </div>
+  );
 
   const renderSortDropdown = () => (
     <div className="dropdown">
@@ -447,7 +490,6 @@ const CommunityMemberManagement = () => {
     </nav>
   );
 
-  // Loading state
   if (loading) {
     return (
       <div className="container-fluid py-4">
@@ -461,7 +503,6 @@ const CommunityMemberManagement = () => {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="container-fluid py-4">
@@ -545,6 +586,29 @@ const CommunityMemberManagement = () => {
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           border-bottom: none;
         }
+
+        .search-container {
+          position: relative;
+        }
+
+        .search-container .form-control {
+          padding-left: 35px;
+        }
+
+        .search-container .fa-search {
+          position: absolute;
+          top: 10px;
+          left: 12px;
+          color: #6c757d;
+        }
+
+        .search-container .btn-link {
+          position: absolute;
+          top: 8px;
+          right: 10px;
+          color: #6c757d;
+          padding: 0;
+        }
       `}</style>
 
       <div className="container-fluid py-4">
@@ -561,6 +625,7 @@ const CommunityMemberManagement = () => {
               
               <div className="d-flex gap-3 align-items-center">
                 {renderStats()}
+                {renderSearchInput()}
                 {renderSortDropdown()}
               </div>
             </div>
@@ -586,7 +651,17 @@ const CommunityMemberManagement = () => {
                     <tr>
                       <td colSpan={8} className="text-center py-5">
                         <i className="fas fa-users fs-1 text-muted opacity-50"></i>
-                        <p className="mt-3 text-muted">No members found</p>
+                        <p className="mt-3 text-muted">
+                          {searchTerm ? "No matching members found" : "No members found"}
+                        </p>
+                        {searchTerm && (
+                          <button
+                            className="btn btn-outline-primary btn-sm"
+                            onClick={() => setSearchTerm('')}
+                          >
+                            Clear search
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ) : (
@@ -600,7 +675,7 @@ const CommunityMemberManagement = () => {
           <div className="card-footer bg-light py-3">
             {renderPagination()}
             <div className="text-center mt-3 text-muted small">
-              Page {currentPage} of {totalPages} • {members.length} total members
+              Showing {currentItems.length} of {filteredMembers.length} members • Page {currentPage} of {totalPages}
             </div>
           </div>
         </div>

@@ -143,7 +143,8 @@ export default function HomePage() {
     <div className="min-h-screen bg-gradient-to-tr from-green-50 via-blue-50 to-white p-6 font-sans text-gray-800">
       <header className="flex flex-col md:flex-row justify-between items-center mb-8">
         <h1 className="text-3xl font-extrabold text-blue-700 mb-4 md:mb-0">
-          Siza Community Watch Dashboard - Melville
+          Siza Community Watch Dashboard 
+          
         </h1>
         {/*<div className="flex gap-3">
           <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow transition">
