@@ -60,7 +60,7 @@ export default function LoginPage() {
       <div className={styles.logincontainer}>
         <form onSubmit={submit}>
           <Image
-            src="/img/hanover1.png"
+            src="/img/Hanover1.png"
             alt="Siza"
             className={`mb-2 ms-14 ${styles.img}`}
             width={160}
