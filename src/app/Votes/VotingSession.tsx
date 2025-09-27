@@ -183,6 +183,10 @@ export default function VotingSessionPage() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
+
+    // subtract 2 hours (in ms)
+    date.setHours(date.getHours() - 2);
+
     return date.toLocaleString("en-US", {
       month: "short",
       day: "numeric",
