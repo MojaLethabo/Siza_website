@@ -2,24 +2,6 @@
 import React, { Suspense, useEffect, useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
-import {
-  Clock,
-  AlertTriangle,
-  CheckCircle2,
-  PhoneCall,
-  Share2,
-  CheckCircle,
-  MapPin,
-  User,
-  Calendar,
-  AlertCircle,
-  Camera,
-  Mic,
-  ExternalLink,
-  Phone,
-  Mail,
-  Shield,
-} from "lucide-react";
 import { formatDistanceToNowStrict } from "date-fns";
 
 interface AddressResult {
@@ -97,7 +79,7 @@ interface Report {
   Report_Location: string;
   Report_Status: string;
   ReporterID: number;
-  Report_CreatedAt?: string;
+  dateReported: string;
 }
 
 interface Reporter {
@@ -203,7 +185,7 @@ function AudioPlayer({ base64String, index }: { base64String: string; index: num
         <div className="d-flex justify-content-between align-items-center">
           <div className="d-flex align-items-center gap-3">
             <div className="avatar-sm bg-primary bg-opacity-10 d-flex align-items-center justify-content-center rounded">
-              <i className="fas fa-microphone text-primary"></i>
+              <span className="text-primary">MIC</span>
             </div>
             <div>
               <h6 className="fw-semibold mb-1">Voice Recording {index + 1}</h6>
@@ -219,7 +201,6 @@ function AudioPlayer({ base64String, index }: { base64String: string; index: num
             }`}
             disabled={!localAudioUrl}
           >
-            <i className={`fas ${isPlaying ? 'fa-pause' : 'fa-play'} me-1`}></i>
             {isPlaying ? 'Pause' : 'Play'}
           </button>
         </div>
@@ -298,7 +279,7 @@ function LocationDisplay({ location }: { location: string }) {
     <div>
       <div className="d-flex gap-3 mb-3">
         <div className="avatar-sm bg-danger bg-opacity-10 d-flex align-items-center justify-content-center rounded flex-shrink-0">
-          <i className="fas fa-map-marker-alt text-danger"></i>
+          <span className="text-danger">MAP</span>
         </div>
         <div className="flex-grow-1">
           {isLoading ? (
@@ -328,7 +309,6 @@ function LocationDisplay({ location }: { location: string }) {
           onClick={openInMaps}
           className="btn btn-primary btn-sm"
         >
-          <i className="fas fa-external-link-alt me-1"></i>
           View on Google Maps
         </button>
       )}
@@ -397,7 +377,6 @@ function ReportContent() {
     return (
       <div className="container-fluid py-4">
         <div className="alert alert-danger" role="alert">
-          <i className="fas fa-exclamation-triangle me-2"></i>
           {error}
         </div>
       </div>
@@ -408,7 +387,6 @@ function ReportContent() {
     return (
       <div className="container-fluid py-4">
         <div className="alert alert-warning" role="alert">
-          <i className="fas fa-exclamation-triangle me-2"></i>
           The requested emergency report could not be found.
         </div>
       </div>
@@ -419,31 +397,27 @@ function ReportContent() {
     Pending: {
       color: "text-warning",
       bgColor: "bg-warning",
-      icon: "fas fa-clock",
     },
     "In Progress": {
       color: "text-info",
       bgColor: "bg-info",
-      icon: "fas fa-spinner fa-spin",
     },
     Resolved: {
       color: "text-success",
       bgColor: "bg-success",
-      icon: "fas fa-check-circle",
     },
   };
 
   const emergencyTypeConfig = {
-    Fire: { color: "text-danger", bgColor: "bg-danger", icon: "🔥", urgency: "Critical" },
-    Accident: { color: "text-warning", bgColor: "bg-warning", icon: "🚗", urgency: "High" },
-    Medical: { color: "text-danger", bgColor: "bg-danger", icon: "🏥", urgency: "Critical" },
-    Theft: { color: "text-primary", bgColor: "bg-primary", icon: "🚨", urgency: "Medium" },
-    Other: { color: "text-secondary", bgColor: "bg-secondary", icon: "⚠️", urgency: "Low" },
+    Fire: { color: "text-danger", bgColor: "bg-danger", urgency: "Critical" },
+    Accident: { color: "text-warning", bgColor: "bg-warning", urgency: "High" },
+    Medical: { color: "text-danger", bgColor: "bg-danger", urgency: "Critical" },
+    Theft: { color: "text-primary", bgColor: "bg-primary", urgency: "Medium" },
+    Other: { color: "text-secondary", bgColor: "bg-secondary", urgency: "Low" },
   };
 
   const status = report.Report_Status;
   const emergencyConfig = emergencyTypeConfig[report.EmergencyType as keyof typeof emergencyTypeConfig] || emergencyTypeConfig.Other;
-  const createdAt = report.Report_CreatedAt || new Date().toISOString();
 
   return (
     <>
@@ -529,7 +503,6 @@ function ReportContent() {
         {/* Header Section */}
         <div className="text-center mb-4">
           <div className="d-inline-flex align-items-center gap-2 bg-white px-3 py-2 rounded-pill shadow-sm border mb-3">
-            <i className="fas fa-shield-alt text-primary"></i>
             <span className="small fw-medium text-muted">Emergency Response System</span>
           </div>
           <h1 className="h2 fw-bold text-dark mb-2">Emergency Report #{report.ReportID}</h1>
@@ -544,7 +517,6 @@ function ReportContent() {
         } border-start border-4 mb-4`}>
           <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
             <div className="d-flex align-items-center gap-3">
-              <i className={statusConfig[status as keyof typeof statusConfig]?.icon}></i>
               <div>
                 <p className="fw-semibold mb-1">Status: {status}</p>
                 <p className="small mb-0">
@@ -565,7 +537,7 @@ function ReportContent() {
               <div className="card-header text-white">
                 <div className="d-flex align-items-center gap-3">
                   <div className="avatar-sm bg-white bg-opacity-20 d-flex align-items-center justify-content-center rounded">
-                    <i className="fas fa-exclamation-triangle"></i>
+                    ALERT
                   </div>
                   <div>
                     <h5 className="mb-1">Emergency Details</h5>
@@ -580,7 +552,6 @@ function ReportContent() {
                   <div className="col-12">
                     <div className={`emergency-type-card ${emergencyConfig.bgColor} bg-opacity-10 border-${emergencyConfig.bgColor.replace('bg-', '')}`}>
                       <div className="d-flex align-items-center gap-2 mb-2">
-                        <span className="fs-4">{emergencyConfig.icon}</span>
                         <h6 className="fw-semibold mb-0">Emergency Type</h6>
                       </div>
                       <p className="h5 fw-bold mb-0">{report.EmergencyType}</p>
@@ -591,13 +562,12 @@ function ReportContent() {
                 {/* Time Reported */}
                 <div className="bg-light rounded p-3 mb-4">
                   <div className="d-flex align-items-center gap-2 mb-2">
-                    <i className="fas fa-calendar text-muted"></i>
                     <h6 className="fw-semibold mb-0 text-muted">Time Reported</h6>
                   </div>
                   <p className="fw-medium mb-1">
                     {(() => {
                       const now = new Date();
-                      const reportTime = new Date(createdAt);
+                      const reportTime = new Date(report.dateReported);
                       const diffInMs = now.getTime() - reportTime.getTime();
                       const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
                       const diffInHours = Math.floor(diffInMinutes / 60);
@@ -611,7 +581,7 @@ function ReportContent() {
                     })()}
                   </p>
                   <small className="text-muted">
-                    {new Date(createdAt).toLocaleString()}
+                    {new Date(report.dateReported).toLocaleString()}
                   </small>
                 </div>
 
@@ -648,7 +618,7 @@ function ReportContent() {
               <div className="card-header text-white">
                 <div className="d-flex align-items-center gap-3">
                   <div className="avatar-sm bg-white bg-opacity-20 d-flex align-items-center justify-content-center rounded">
-                    <i className="fas fa-camera"></i>
+                    CAM
                   </div>
                   <div>
                     <h5 className="mb-1">Evidence & Media</h5>
@@ -662,7 +632,6 @@ function ReportContent() {
                 {report.MediaPhoto && (
                   <div className="mb-4">
                     <h6 className="fw-semibold text-muted mb-3">
-                      <i className="fas fa-camera me-2"></i>
                       Photo Evidence
                     </h6>
                     <div className="row g-3">
@@ -672,13 +641,13 @@ function ReportContent() {
                           <div key={idx} className="col-sm-6">
                             <div className="position-relative overflow-hidden rounded border">
                              <Image
-  src={`data:image/jpeg;base64,${img}`}
-  alt={`Emergency photo ${idx + 1}`}
-  width={500}
-  height={300}
-  className="img-fluid"
-  unoptimized
-/>
+                                src={`data:image/jpeg;base64,${img}`}
+                                alt={`Emergency photo ${idx + 1}`}
+                                width={500}
+                                height={300}
+                                className="img-fluid"
+                                unoptimized
+                              />
                             </div>
                           </div>
                         ))}
@@ -686,11 +655,10 @@ function ReportContent() {
                   </div>
                 )}
 
-                {/* Audio Evidence */}
+                {/* Audio Evidence 
                 {report.MediaVoice && (
                   <div>
                     <h6 className="fw-semibold text-muted mb-3">
-                      <i className="fas fa-microphone me-2"></i>
                       Audio Evidence
                     </h6>
                     <div className="d-flex flex-column gap-3">
@@ -701,7 +669,7 @@ function ReportContent() {
                         ))}
                     </div>
                   </div>
-                )}
+                )}*/}
               </div>
             </div>
           </div>
@@ -718,14 +686,12 @@ function ReportContent() {
                   href={`tel:${reporter.PhoneNumber}`}
                   className="btn btn-danger d-flex align-items-center justify-content-center gap-2"
                 >
-                  <i className="fas fa-phone"></i>
                   Call Reporter Now
                 </a>
                 <a
                   href={`mailto:${reporter.Email}?subject=Emergency Report Update - Report #${report.ReportID}&body=Dear ${reporter.FullName},%0A%0AThis is an update regarding your emergency report #${report.ReportID} for ${report.EmergencyType}.%0A%0AStatus: ${report.Report_Status}%0A%0APlease let us know if you have any additional information or questions.%0A%0ABest regards,%0AEmergency Response Team`}
                   className="btn btn-primary d-flex align-items-center justify-content-center gap-2"
                 >
-                  <i className="fas fa-envelope"></i>
                   Send Email Update
                 </a>
               </div>
@@ -756,7 +722,7 @@ function ReportContent() {
                     />
                   ) : (
                     <div className="avatar avatar-lg">
-                      <i className="fas fa-user"></i>
+                      USER
                     </div>
                   )}
                   <div className="flex-grow-1">
@@ -770,14 +736,12 @@ function ReportContent() {
                 
                 <div className="d-flex flex-column gap-3">
                   <div className="d-flex align-items-center gap-3 p-2 bg-light rounded">
-                    <i className="fas fa-phone text-muted"></i>
                     <div className="flex-grow-1">
                       <small className="text-muted">Phone</small>
                       <p className="fw-medium mb-0">{reporter.PhoneNumber}</p>
                     </div>
                   </div>
                   <div className="d-flex align-items-center gap-3 p-2 bg-light rounded">
-                    <i className="fas fa-envelope text-muted"></i>
                     <div className="flex-grow-1">
                       <small className="text-muted">Email</small>
                       <p className="fw-medium mb-0 text-truncate">{reporter.Email}</p>
@@ -796,21 +760,19 @@ function ReportContent() {
                 <div className="timeline-item text-danger mb-3">
                   <h6 className="fw-semibold mb-1">Report Created</h6>
                   <small className="text-muted">
-                    {formatDistanceToNowStrict(new Date(createdAt), {
+                    {formatDistanceToNowStrict(new Date(report.dateReported), {
                       addSuffix: true,
                     })}
                   </small>
+                  <br />
+                  <small className="text-muted">
+                    {new Date(report.dateReported).toLocaleString()}
+                  </small>
                 </div>
-
               </div>
             </div>
-
-            {/* Priority Status Card */}
-           
           </div>
         </div>
-
-    
       </div>
     </>
   );

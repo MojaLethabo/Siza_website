@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Image from 'next/image';
 import {
   ArrowLeft,
@@ -19,11 +19,10 @@ import {
   AlertTriangle,
   XCircle,
   Edit,
-  Download,
   Settings,
-  MoreHorizontal,
   ChevronUp,
   ChevronDown,
+  Filter,
 } from "lucide-react";
 
 interface User {
@@ -50,7 +49,8 @@ interface Report {
 const UserProfilePage = () => {
   const searchParams = useSearchParams();
   const userID = searchParams.get('userID');
-  
+  const router = useRouter();
+
   const [user, setUser] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -84,10 +84,10 @@ const UserProfilePage = () => {
           setUser(data.User);
         }
       } catch (err) {
-              const message = err instanceof Error ? err.message : "An unexpected error occurred.";
-              setError(message);
-               setUser(null);
-            }finally {
+        const message = err instanceof Error ? err.message : "An unexpected error occurred.";
+        setError(message);
+        setUser(null);
+      } finally {
         setIsLoading(false);
       }
     }
@@ -106,13 +106,13 @@ const UserProfilePage = () => {
         }
 
         setReports(data.reports || []);
-      } catch (err: unknown) {  // Better than any
-          setReportsError(
-            err instanceof Error 
-              ? err.message 
-              : "An unexpected error occurred."
-          );
-        }finally {
+      } catch (err: unknown) {
+        setReportsError(
+          err instanceof Error 
+            ? err.message 
+            : "An unexpected error occurred."
+        );
+      } finally {
         setReportsLoading(false);
       }
     }
@@ -121,59 +121,76 @@ const UserProfilePage = () => {
     fetchReports();
   }, [userID]);
 
-const getStatusBadge = (status: string) => {
-  const baseClasses = "badge";
+  // Get report statistics
+  const getReportStats = () => {
+    const completed = reports.filter(r => r.Report_Status === "Completed").length;
+    const ongoing = reports.filter(r => r.Report_Status === "On-Going" || r.Report_Status === "On-going").length;
+    const abandoned = reports.filter(r => r.Report_Status === "Abandoned").length;
+    const falseReports = reports.filter(r => r.Report_Status === "False report").length;
+    const escalated = reports.filter(r => r.Report_Status === "Escalated").length;
+    return { 
+      completed, 
+      ongoing, 
+      abandoned, 
+      falseReports, 
+      escalated, 
+      total: reports.length 
+    };
+  };
 
-  switch (status) {
-    case "Completed":
-      return (
-        <span className={`${baseClasses} bg-success text-white`}>
-          <i className="fas fa-check-circle me-1"></i>
-          Completed
-        </span>
-      );
+  const getStatusBadge = (status: string) => {
+    const baseClasses = "badge";
 
-    case "On-Going":
-    case "On-going":
-      return (
-        <span className={`${baseClasses} bg-warning text-dark`}>
-          <i className="fas fa-clock me-1"></i>
-          In Progress
-        </span>
-      );
+    switch (status) {
+      case "Completed":
+        return (
+          <span className={`${baseClasses} bg-success text-white`}>
+            <CheckCircle className="me-1" size={14} />
+            Completed
+          </span>
+        );
 
-    case "Abandoned":
-      return (
-        <span className={`${baseClasses} bg-danger text-white`}>
-          <i className="fas fa-times-circle me-1"></i>
-          Abandoned
-        </span>
-      );
+      case "On-Going":
+      case "On-going":
+        return (
+          <span className={`${baseClasses} bg-warning text-dark`}>
+            <Clock className="me-1" size={14} />
+            In Progress
+          </span>
+        );
 
-    case "Escalated":
-      return (
-        <span className={`${baseClasses} bg-warning text-dark`}>
-          <i className="fas fa-exclamation-triangle me-1"></i>
-          Escalated
-        </span>
-      );
+      case "Abandoned":
+        return (
+          <span className={`${baseClasses} bg-danger text-white`}>
+            <XCircle className="me-1" size={14} />
+            Abandoned
+          </span>
+        );
 
-    case "False report":
-      return (
-        <span className={`${baseClasses} bg-danger text-white`}>
-          <i className="fas fa-times-circle me-1"></i>
-          False report
-        </span>
-      );
+      case "Escalated":
+        return (
+          <span className={`${baseClasses} bg-warning text-dark`}>
+            <AlertTriangle className="me-1" size={14} />
+            Escalated
+          </span>
+        );
 
-    default:
-      return (
-        <span className={`${baseClasses} bg-secondary text-white`}>
-          {status}
-        </span>
-      );
-  }
-};
+      case "False report":
+        return (
+          <span className={`${baseClasses} bg-danger text-white`}>
+            <XCircle className="me-1" size={14} />
+            False report
+          </span>
+        );
+
+      default:
+        return (
+          <span className={`${baseClasses} bg-secondary text-white`}>
+            {status}
+          </span>
+        );
+    }
+  };
 
   const sortedReports = [...reports].sort((a, b) => {
     if (!sortConfig) return 0;
@@ -205,15 +222,15 @@ const getStatusBadge = (status: string) => {
 
   const getSortIcon = (key: keyof Report) => {
     if (!sortConfig || sortConfig.key !== key) {
-      return <i className="fas fa-sort opacity-50 ms-1"></i>;
+      return <ChevronUp className="ms-1 opacity-50" size={14} />;
     }
     return sortConfig.direction === 'asc' ? 
-      <i className="fas fa-sort-up ms-1"></i> : 
-      <i className="fas fa-sort-down ms-1"></i>;
+      <ChevronUp className="ms-1" size={14} /> : 
+      <ChevronDown className="ms-1" size={14} />;
   };
 
-type EmergencyType = "Fire" | "Crime" | "SOS" | string;  // Explicit union type
-const getPriorityLevel = (type: EmergencyType) => { 
+  type EmergencyType = "Fire" | "Crime" | "SOS" | string;
+  const getPriorityLevel = (type: EmergencyType) => { 
     switch (type) {
       case "Fire":
         return { color: "bg-danger", level: "Critical" };
@@ -226,15 +243,6 @@ const getPriorityLevel = (type: EmergencyType) => {
     }
   };
 
-  const getReportStats = () => {
-    const completed = reports.filter(r => r.Report_Status === "Completed").length;
-    const ongoing = reports.filter(r => r.Report_Status === "On-Going" || r.Report_Status === "On-going").length;
-    const abandoned = reports.filter(r => r.Report_Status === "Abandoned").length;
-    const falseReports = reports.filter(r => r.Report_Status === "False report").length;
-    const escalated = reports.filter(r => r.Report_Status === "Escalated").length;
-    return { completed, ongoing, abandoned, falseReports, escalated, total: reports.length };
-  };
-
   if (error) {
     return (
       <div className="container-fluid py-4">
@@ -242,14 +250,14 @@ const getPriorityLevel = (type: EmergencyType) => {
           <div className="col-md-6">
             <div className="card border-0 shadow-sm">
               <div className="card-body text-center py-5">
-                <i className="fas fa-exclamation-circle text-danger fa-3x mb-3"></i>
+                <AlertCircle className="text-danger mb-3" size={48} />
                 <h3 className="mb-3">Unable to Load Profile</h3>
                 <p className="text-muted mb-4">{error}</p>
                 <button
                   onClick={() => window.history.back()}
                   className="btn btn-primary"
                 >
-                  <i className="fas fa-arrow-left me-2"></i>
+                  <ArrowLeft className="me-2" size={16} />
                   Return to Dashboard
                 </button>
               </div>
@@ -288,19 +296,6 @@ const getPriorityLevel = (type: EmergencyType) => {
           color: white;
         }
         
-        .avatar {
-          width: 64px;
-          height: 64px;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: white;
-          font-weight: bold;
-          font-size: 1.5rem;
-        }
-        
         .profile-avatar {
           width: 80px;
           height: 80px;
@@ -325,7 +320,6 @@ const getPriorityLevel = (type: EmergencyType) => {
           background-color: #28a745;
           border: 3px solid white;
           border-radius: 50%;
-          box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.25);
         }
         
         .card {
@@ -365,9 +359,13 @@ const getPriorityLevel = (type: EmergencyType) => {
           background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
           transition: width 0.3s ease;
         }
+
+        .cursor-pointer {
+          cursor: pointer;
+        }
       `}</style>
 
-      <div className="container-fluid py-4">
+      <div className="container-fluid py-4" id="user-profile-content">
         {/* Header */}
         <div className="card mb-4">
           <div className="card-header text-white py-4">
@@ -377,25 +375,26 @@ const getPriorityLevel = (type: EmergencyType) => {
                   onClick={() => window.history.back()}
                   className="btn btn-light btn-sm me-3"
                 >
-                  <i className="fas fa-arrow-left me-2"></i>
+                  <ArrowLeft className="me-2" size={16} />
                   Back to Dashboard
                 </button>
                 <div>
                   <h3 className="mb-1">
-                    <i className="fas fa-user me-2"></i>
+                    <User className="me-2" size={24} />
                     User Profile Management
                   </h3>
-                  <p className="mb-0 opacity-75">Comprehensive user account overview</p>
+                  <p className="mb-0 opacity-75">Comprehensive user account overview with advanced analytics</p>
                 </div>
               </div>
               
               <div className="d-flex gap-3 align-items-center">
                 <div className="stat-badge">
-                  <i className="fas fa-id-badge me-1"></i>
+                  <Shield className="me-1" size={14} />
                   User ID: {userID || 'N/A'}
                 </div>
+                
                 <button className="btn btn-light btn-sm">
-                  <i className="fas fa-cog"></i>
+                  <Settings size={14} />
                 </button>
               </div>
             </div>
@@ -409,11 +408,11 @@ const getPriorityLevel = (type: EmergencyType) => {
               <div className="card-header bg-light">
                 <div className="d-flex justify-content-between align-items-center">
                   <h5 className="mb-0">
-                    <i className="fas fa-user me-2"></i>
+                    <User className="me-2" size={18} />
                     Profile Information
                   </h5>
                   <button className="btn btn-sm btn-outline-secondary">
-                    <i className="fas fa-edit"></i>
+                    <Edit size={14} />
                   </button>
                 </div>
               </div>
@@ -422,7 +421,11 @@ const getPriorityLevel = (type: EmergencyType) => {
                 <div className="profile-avatar">
                   {user.ProfilePhoto ? (
                     <Image
-                      src={user.ProfilePhoto}
+                       src={
+                        user.ProfilePhoto.startsWith("http")
+                          ? user.ProfilePhoto
+                          : `data:image/jpeg;base64,${user.ProfilePhoto}`
+                      }
                       alt="Profile"
                       width={80}
                       height={80}
@@ -439,7 +442,7 @@ const getPriorityLevel = (type: EmergencyType) => {
                 <p className="text-muted mb-3">@{user.Username}</p>
                 
                 <span className="badge bg-primary mb-3">
-                  <i className="fas fa-shield-alt me-1"></i>
+                  <Shield className="me-1" size={12} />
                   {user.UserType}
                 </span>
                 
@@ -447,15 +450,15 @@ const getPriorityLevel = (type: EmergencyType) => {
                 
                 <div className="text-start">
                   <div className="d-flex align-items-center mb-3">
-                    <i className="fas fa-envelope text-muted me-3"></i>
+                    <Mail className="text-muted me-3" size={16} />
                     <small className="text-break">{user.Email}</small>
                   </div>
                   <div className="d-flex align-items-center mb-3">
-                    <i className="fas fa-phone text-muted me-3"></i>
+                    <Phone className="text-muted me-3" size={16} />
                     <small>{user.PhoneNumber || "Not provided"}</small>
                   </div>
                   <div className="d-flex align-items-center">
-                    <i className="fas fa-calendar text-muted me-3"></i>
+                    <Calendar className="text-muted me-3" size={16} />
                     <small>
                       Member since {new Date(user.CreatedAt).toLocaleDateString('en-US', {
                         month: 'long',
@@ -472,8 +475,8 @@ const getPriorityLevel = (type: EmergencyType) => {
             <div className="card">
               <div className="card-header bg-light">
                 <h5 className="mb-0">
-                  <i className="fas fa-chart-bar me-2"></i>
-                  Activity Overview
+                  <Activity className="me-2" size={18} />
+                  Activity Analytics
                 </h5>
               </div>
               <div className="card-body">
@@ -511,15 +514,15 @@ const getPriorityLevel = (type: EmergencyType) => {
                   <>
                     <hr />
                     <div className="text-center">
-                      <small className="text-muted d-block mb-2">Completion Rate</small>
+                      <small className="text-muted d-block mb-2">Success Rate</small>
                       <div className="completion-bar mb-2">
                         <div 
                           className="completion-fill"
-                          style={{ width: `${((stats.completed + stats.escalated)/ stats.total) * 100}%` }}
+                          style={{ width: `${((stats.completed + stats.escalated) / stats.total) * 100}%` }}
                         ></div>
                       </div>
                       <small className="text-success fw-bold">
-                        {Math.round(((stats.completed + stats.escalated )/ stats.total) * 100)}% Complete
+                        {Math.round(((stats.completed + stats.escalated) / stats.total) * 100)}% Success Rate
                       </small>
                     </div>
                   </>
@@ -535,22 +538,20 @@ const getPriorityLevel = (type: EmergencyType) => {
                 <div className="d-flex justify-content-between align-items-center">
                   <div>
                     <h5 className="mb-1">
-                      <i className="fas fa-clipboard-list me-2"></i>
-                      Incident Reports
+                      <FileText className="me-2" size={18} />
+                      Incident Reports Database
                     </h5>
                     <small className="text-muted">
-                      {reports.length} {reports.length === 1 ? 'report' : 'reports'} submitted by this user
+                      {reports.length} {reports.length === 1 ? 'report' : 'reports'} submitted • 
+                      Last updated: {reports.length > 0 ? new Date(Math.max(...reports.map(r => new Date(r.dateReported).getTime()))).toLocaleDateString() : 'Never'}
                     </small>
                   </div>
-                  <div className="d-flex gap-2">
-                    <button className="btn btn-sm btn-outline-primary">
-                      <i className="fas fa-download me-1"></i>
-                      Export
-                    </button>
+                 {/* <div className="d-flex gap-2">
                     <button className="btn btn-sm btn-outline-secondary">
-                      <i className="fas fa-ellipsis-h"></i>
+                      <Filter className="me-1" size={14} />
+                      Filter
                     </button>
-                  </div>
+                  </div>*/}
                 </div>
               </div>
 
@@ -564,7 +565,7 @@ const getPriorityLevel = (type: EmergencyType) => {
 
                 {reportsError && (
                   <div className="text-center py-5">
-                    <i className="fas fa-exclamation-circle text-danger fa-3x mb-3"></i>
+                    <AlertCircle className="text-danger mb-3" size={48} />
                     <h5 className="mb-3">Unable to Load Reports</h5>
                     <p className="text-muted">{reportsError}</p>
                   </div>
@@ -572,9 +573,10 @@ const getPriorityLevel = (type: EmergencyType) => {
 
                 {reports.length === 0 && !reportsLoading && (
                   <div className="text-center py-5">
-                    <i className="fas fa-file-alt text-muted fa-3x mb-3 opacity-50"></i>
+                    <FileText className="text-muted mb-3 opacity-50" size={48} />
                     <h5 className="mb-3">No Reports Found</h5>
-                    <p className="text-muted">This user has not submitted any incident reports.</p>
+                    <p className="text-muted">This user has not submitted any incident reports yet.</p>
+                    <small className="text-muted">Reports will appear here once the user starts submitting them.</small>
                   </div>
                 )}
 
@@ -600,6 +602,7 @@ const getPriorityLevel = (type: EmergencyType) => {
                             Date Submitted
                             {getSortIcon('dateReported')}
                           </th>
+                          <th>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -608,7 +611,12 @@ const getPriorityLevel = (type: EmergencyType) => {
                           return (
                             <tr key={report.ReportID} className={index % 2 === 0 ? 'table-light' : ''}>
                               <td>
-                                <span className="fw-bold">#{report.ReportID}</span>
+                                <button
+                                  className="btn btn-link p-0 fw-bold"
+                                  onClick={() => router.push(`/Report?id=${report.ReportID}`)}
+                                >
+                                  #{report.ReportID}
+                                </button>
                               </td>
                               <td>
                                 <div className="d-flex align-items-center">
@@ -618,12 +626,15 @@ const getPriorityLevel = (type: EmergencyType) => {
                                     <small className="text-muted text-truncate d-block" style={{maxWidth: '250px'}}>
                                       {report.EmerDescription}
                                     </small>
+                                    <small className="badge bg-light text-dark">
+                                      {priority.level}
+                                    </small>
                                   </div>
                                 </div>
                               </td>
                               <td>
                                 <div className="d-flex align-items-center">
-                                  <i className="fas fa-map-marker-alt text-muted me-2"></i>
+                                  <MapPin className="text-muted me-2" size={14} />
                                   <small>{report.Report_Location}</small>
                                 </div>
                               </td>
@@ -633,7 +644,7 @@ const getPriorityLevel = (type: EmergencyType) => {
                               <td>
                                 <div>
                                   <div className="d-flex align-items-center">
-                                    <i className="fas fa-calendar text-muted me-2"></i>
+                                    <Calendar className="text-muted me-2" size={14} />
                                     <small>
                                       {new Date(report.dateReported).toLocaleDateString('en-US', {
                                         month: 'short',
@@ -648,6 +659,17 @@ const getPriorityLevel = (type: EmergencyType) => {
                                       minute: '2-digit'
                                     })}
                                   </small>
+                                </div>
+                              </td>
+                              <td>
+                                <div className="btn-group btn-group-sm">
+                                  <button
+                                    className="btn btn-outline-primary"
+                                    onClick={() => router.push(`/Report?id=${report.ReportID}`)}
+                                    title="View Details"
+                                  >
+                                    <FileText size={14} />
+                                  </button>
                                 </div>
                               </td>
                             </tr>
