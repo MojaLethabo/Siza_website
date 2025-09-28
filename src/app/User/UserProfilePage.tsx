@@ -336,7 +336,7 @@ const UserProfilePage = () => {
           background-color: #f8f9fa;
           border-bottom: 2px solid #dee2e6;
           font-weight: 600;
-          color: #495057;
+          color: #ffffffff;
         }
         
         .priority-dot {
@@ -393,9 +393,9 @@ const UserProfilePage = () => {
                   User ID: {userID || 'N/A'}
                 </div>
                 
-                <button className="btn btn-light btn-sm">
+               {/*} <button className="btn btn-light btn-sm">
                   <Settings size={14} />
-                </button>
+                </button>*/}
               </div>
             </div>
           </div>
@@ -407,13 +407,11 @@ const UserProfilePage = () => {
             <div className="card mb-4">
               <div className="card-header bg-light">
                 <div className="d-flex justify-content-between align-items-center">
-                  <h5 className="mb-0">
-                    <User className="me-2" size={18} />
+                  <h5 className="mb-0 text-white">
+                    <User className="me-2 " size={18} />
                     Profile Information
                   </h5>
-                  <button className="btn btn-sm btn-outline-secondary">
-                    <Edit size={14} />
-                  </button>
+                 
                 </div>
               </div>
               
@@ -474,7 +472,7 @@ const UserProfilePage = () => {
             {/* Statistics Card */}
             <div className="card">
               <div className="card-header bg-light">
-                <h5 className="mb-0">
+                <h5 className="mb-0 text-white">
                   <Activity className="me-2" size={18} />
                   Activity Analytics
                 </h5>
@@ -536,12 +534,13 @@ const UserProfilePage = () => {
             <div className="card">
               <div className="card-header bg-light">
                 <div className="d-flex justify-content-between align-items-center">
-                  <div>
-                    <h5 className="mb-1">
+                  <div className="mb-1 text-white">
+                    <h5 className="mb-1 text-white">
                       <FileText className="me-2" size={18} />
                       Incident Reports Database
                     </h5>
-                    <small className="text-muted">
+
+                    <small className="text-muted text-white">
                       {reports.length} {reports.length === 1 ? 'report' : 'reports'} submitted • 
                       Last updated: {reports.length > 0 ? new Date(Math.max(...reports.map(r => new Date(r.dateReported).getTime()))).toLocaleDateString() : 'Never'}
                     </small>
@@ -581,28 +580,28 @@ const UserProfilePage = () => {
                 )}
 
                 {reports.length > 0 && (
-                  <div className="table-responsive">
-                    <table className="table table-hover mb-0">
+                  <div className="table-responsive text-black ">
+                    <table className="table table-hover mb-0 text-black">
                       <thead>
                         <tr>
                           <th 
-                            className="cursor-pointer"
+                            className="cursor-pointer text-black"
                             onClick={() => requestSort('ReportID')}
                           >
                             Report ID
                             {getSortIcon('ReportID')}
                           </th>
-                          <th>Report Details</th>
-                          <th>Location</th>
-                          <th>Status</th>
+                          <th className="text-black">Report Details</th>
+                          <th className="text-black">Location</th>
+                          <th className="text-black">Status</th>
                           <th 
-                            className="cursor-pointer"
+                            className="cursor-pointer text-black"
                             onClick={() => requestSort('dateReported')}
                           >
                             Date Submitted
                             {getSortIcon('dateReported')}
                           </th>
-                          <th>Actions</th>
+                          <th className="text-black">Actions</th>
                         </tr>
                       </thead>
                       <tbody>

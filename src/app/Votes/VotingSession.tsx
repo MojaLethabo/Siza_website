@@ -323,7 +323,11 @@ export default function VotingSessionPage() {
                   {nominee?.ProfilePhoto ? (
                     <img
                       className="h-16 w-16 rounded-full"
-                      src={nominee.ProfilePhoto}
+                      src={
+                        nominee.ProfilePhoto.startsWith("http")
+                          ? nominee.ProfilePhoto
+                          : `data:image/jpeg;base64,${nominee.ProfilePhoto}`
+                      }
                       alt={nominee.FullName}
                     />
                   ) : (
@@ -665,22 +669,23 @@ export default function VotingSessionPage() {
                     <i className="fas fa-cog me-2"></i>
                     Voting Session Status
                   </h4>
-                  <div
-                    className={`px-3 py-1 rounded-pill ${
-                      votingSettings.VotingEnabled
-                        ? "bg-success bg-opacity-10 text-success"
-                        : "bg-secondary bg-opacity-10 text-secondary"
-                    }`}
-                  >
-                    <i
-                      className={`fas ${
-                        votingSettings.VotingEnabled
-                          ? "fa-check-circle"
-                          : "fa-pause-circle"
-                      } me-1`}
-                    ></i>
-                    {votingSettings.VotingEnabled ? "Active" : "Inactive"}
-                  </div>
+                 <div
+  className={`px-3 py-1 rounded-pill text-white ${
+    votingSettings.VotingEnabled
+      ? "bg-success bg-opacity-10"
+      : "bg-secondary bg-opacity-10"
+  }`}
+>
+  <i
+    className={`fas ${
+      votingSettings.VotingEnabled
+        ? "fa-check-circle"
+        : "fa-pause-circle"
+    } me-1`}
+  ></i>
+  {votingSettings.VotingEnabled ? "Active" : "Inactive"}
+</div>
+
                 </div>
 
                 <div className="row g-3">
@@ -810,7 +815,11 @@ export default function VotingSessionPage() {
                               <div className="avatar mx-auto mb-3">
                                 {nominee?.ProfilePhoto ? (
                                   <img
-                                    src={nominee.ProfilePhoto}
+                                    src={
+                        nominee.ProfilePhoto.startsWith("http")
+                          ? nominee.ProfilePhoto
+                          : `data:image/jpeg;base64,${nominee.ProfilePhoto}`
+                      }
                                     alt={nominee.FullName}
                                     className="rounded-circle w-100 h-100 object-cover"
                                   />
@@ -907,7 +916,11 @@ export default function VotingSessionPage() {
                                 <div className="avatar me-2">
                                   {nominee?.ProfilePhoto ? (
                                     <img
-                                      src={nominee.ProfilePhoto}
+                                      src={
+                        nominee.ProfilePhoto.startsWith("http")
+                          ? nominee.ProfilePhoto
+                          : `data:image/jpeg;base64,${nominee.ProfilePhoto}`
+                      }
                                       alt={nominee.FullName}
                                       className="rounded-circle w-100 h-100 object-cover"
                                     />
@@ -934,7 +947,12 @@ export default function VotingSessionPage() {
                                 <div className="avatar me-2">
                                   {nominator?.ProfilePhoto ? (
                                     <img
-                                      src={nominator.ProfilePhoto}
+                                     
+                                      src={
+                        nominator.ProfilePhoto.startsWith("http")
+                          ? nominator.ProfilePhoto
+                          : `data:image/jpeg;base64,${nominator.ProfilePhoto}`
+                      }
                                       alt={nominator.FullName}
                                       className="rounded-circle w-100 h-100 object-cover"
                                     />
@@ -1057,7 +1075,11 @@ export default function VotingSessionPage() {
                                 <div className="avatar me-2">
                                   {nominee?.ProfilePhoto ? (
                                     <img
-                                      src={nominee.ProfilePhoto}
+                                      src={
+                        nominee.ProfilePhoto.startsWith("http")
+                          ? nominee.ProfilePhoto
+                          : `data:image/jpeg;base64,${nominee.ProfilePhoto}`
+                      }
                                       alt={nominee.FullName}
                                       className="rounded-circle w-100 h-100 object-cover"
                                     />
