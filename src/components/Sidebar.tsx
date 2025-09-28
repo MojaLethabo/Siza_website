@@ -371,6 +371,24 @@ export default function Sidebar() {
                 <p>Support Desk</p>
               </Link>
             </li>
+            <li
+              className={`nav-item ${
+                pathname === "/UserGuide" ? "active" : ""
+              }`}
+              style={pathname === "/UserGuide" ? activeItemStyles : {}}
+            >
+              <Link
+                href="/UserGuide"
+                style={
+                  pathname === "/UserGuide"
+                    ? { ...linkStyles, ...activeLinkStyles }
+                    : linkStyles
+                }
+              >
+                <i className="fas fa-book" style={iconStyles}></i>
+                <p>User Guide</p>
+              </Link>
+            </li>
           </ul>
         </div>
       </div>
