@@ -3,13 +3,83 @@
 import React, { useEffect, useRef, useState } from "react";
 import Chart from "chart.js/auto";
 import { usePathname } from "next/navigation";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+
+// PDF Button Component
+const PDFButton = ({ 
+  elementId, 
+  filename = "document", 
+  className = "",
+  loading = false
+}: { 
+  elementId: string; 
+  filename?: string;
+  className?: string;
+  loading?: boolean;
+}) => {
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const generatePDF = async () => {
+    setIsGenerating(true);
+    
+    try {
+      const element = document.getElementById(elementId);
+      if (!element) throw new Error("Element not found");
+      
+      const canvas = await html2canvas(element, { 
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        backgroundColor: "#ffffff"
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210;
+      const pageHeight = 297;
+      const imgHeight = canvas.height * imgWidth / canvas.width;
+      
+      let heightLeft = imgHeight;
+      let position = 0;
+      
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+      
+      pdf.save(`${filename}-${new Date().toISOString().split('T')[0]}.pdf`);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  return (
+    <button 
+      onClick={generatePDF} 
+      disabled={isGenerating || loading}
+      className={className}
+    >
+      <i className="fas fa-file-pdf me-1"></i>
+      {isGenerating ? "Generating PDF..." : "Export PDF"}
+    </button>
+  );
+};
 
 export default function Analytics() {
   // Refs for all charts
   const incidentsRef = useRef<HTMLCanvasElement>(null);
   const timeRef = useRef<HTMLCanvasElement>(null);
   const typeRef = useRef<HTMLCanvasElement>(null);
-  //const respondersRef = useRef<HTMLCanvasElement>(null);
   const funnelRef = useRef<HTMLCanvasElement>(null);
   const messagesRef = useRef<HTMLCanvasElement>(null);
   const messagesChartRef = useRef<Chart | null>(null);
@@ -44,7 +114,6 @@ export default function Analytics() {
   const incidentsChartRef = useRef<Chart | null>(null);
   const timeChartRef = useRef<Chart | null>(null);
   const typeChartRef = useRef<Chart | null>(null);
-  //const respondersChartRef = useRef<Chart | null>(null);
   const funnelChartRef = useRef<Chart | null>(null);
 
   const BASE =
@@ -280,7 +349,6 @@ export default function Analytics() {
     if (incidentsChartRef.current) incidentsChartRef.current.destroy();
     if (timeChartRef.current) timeChartRef.current.destroy();
     if (typeChartRef.current) typeChartRef.current.destroy();
-    //if (respondersChartRef.current) respondersChartRef.current.destroy();
     if (funnelChartRef.current) funnelChartRef.current.destroy();
 
     const commonOptions = {
@@ -318,7 +386,7 @@ export default function Analytics() {
       },
     };
 
-    // Render charts (same as before)
+    // Render charts
     if (incidentsRef.current) {
       const ctx = incidentsRef.current.getContext("2d");
       if (ctx) {
@@ -493,49 +561,6 @@ export default function Analytics() {
       }
     }
 
-    /*if (respondersRef.current) {
-      const ctx = respondersRef.current.getContext("2d");
-      if (ctx) {
-        respondersChartRef.current = new Chart(ctx, {
-          type: "doughnut",
-          data: {
-            labels: chartData.responders.labels,
-            datasets: [
-              {
-                data: chartData.responders.data,
-                backgroundColor: [
-                  colorPalette.chart.blue,
-                  colorPalette.chart.green,
-                  colorPalette.chart.orange,
-                  colorPalette.chart.purple,
-                  colorPalette.chart.teal,
-                ],
-                borderColor: "#fff",
-                borderWidth: 3,
-                hoverBorderWidth: 4,
-              },
-            ],
-          },
-          options: {
-            ...commonOptions,
-            cutout: "60%",
-            plugins: {
-              ...commonOptions.plugins,
-              tooltip: {
-                ...commonOptions.plugins.tooltip,
-                callbacks: {
-                  label: (context) => {
-                    return `${context.label}: ${context.raw} responses`;
-                  },
-                },
-              },
-            },
-          },
-        });
-        renderHTMLLegend(respondersChartRef.current, "respondersLegend");
-      }
-    }*/
-
     if (funnelRef.current) {
       const ctx = funnelRef.current.getContext("2d");
       if (ctx) {
@@ -680,7 +705,6 @@ export default function Analytics() {
       if (incidentsChartRef.current) incidentsChartRef.current.destroy();
       if (timeChartRef.current) timeChartRef.current.destroy();
       if (typeChartRef.current) typeChartRef.current.destroy();
-      //if (respondersChartRef.current) respondersChartRef.current.destroy();
       if (funnelChartRef.current) funnelChartRef.current.destroy();
     };
   }, []);
@@ -776,6 +800,7 @@ export default function Analytics() {
           flex-wrap: wrap;
           justify-content: center;
           margin-top: 1rem;
+          gap: 0.5rem;
         }
 
         .legend-item {
@@ -817,9 +842,37 @@ export default function Analytics() {
         .dropdown-toggle::after {
           margin-left: 0.5rem;
         }
+
+        .pdf-button {
+          background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+          border: none;
+          color: white;
+          padding: 8px 16px;
+          border-radius: 6px;
+          font-weight: 500;
+          transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        
+        .pdf-button:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .pdf-button:active {
+          transform: translateY(0);
+        }
+        
+        .pdf-button:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+          transform: none;
+        }
       `}</style>
 
-      <div className="container-fluid py-4">
+      <div className="container-fluid py-4" id="analytics-dashboard">
         {/* Dashboard Header */}
         <div className="card mb-4">
           <div className="card-header text-white py-4">
@@ -896,6 +949,14 @@ export default function Analytics() {
                     </button>
                   </div>
                 </div>
+                
+                {/* PDF Generation Button */}
+                <PDFButton 
+                  elementId="analytics-dashboard"
+                  filename="analytics-report"
+                  className="pdf-button"
+                  loading={loading}
+                />
               </div>
             </div>
           </div>
@@ -976,31 +1037,7 @@ export default function Analytics() {
             </div>
           </div>
 
-          {/* Top Responders and Lifecycle 
-          <div className="col-lg-6">
-            <div className="card h-100">
-              <div className="card-header text-white py-3">
-                <div className="d-flex align-items-center">
-                  <div className="avatar me-3">
-                    <i className="fas fa-medal"></i>
-                  </div>
-                  <div>
-                    <h5 className="mb-0">Top Responders</h5>
-                    <small className="opacity-75">
-                      Most active community response members
-                    </small>
-                  </div>
-                </div>
-              </div>
-              <div className="card-body">
-                <div className="chart-container" style={{ height: "350px" }}>
-                  <canvas ref={respondersRef}></canvas>
-                </div>
-                <div id="respondersLegend" className="legend-container"></div>
-              </div>
-            </div>
-          </div>*/}
-          {/* Top Responders - Changed to list view */}
+          {/* Top Responders */}
           <div className="col-lg-6">
             <div className="card h-100">
               <div className="card-header text-white py-3">

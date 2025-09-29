@@ -82,6 +82,19 @@ interface FireIncident {
   timestamp: Date;
 }
 
+// Add interface for average response time
+interface AverageResponseTime {
+  averageResponseTimeMinutes: number;
+  totalReports: number;
+  respondedReports: number;
+}
+
+interface AverageResponseTimeApiResponse {
+  success: boolean;
+  emergencyType: string;
+  data: AverageResponseTime;
+}
+
 const reportTypes = [
   "Crime",
   "Fire",
@@ -93,8 +106,8 @@ const reportTypes = [
 interface FireIncidentApiResponse {
   suburbName: string;
   dateReported: string;
-  // Add other properties from the API response
 }
+
 const statusColors = {
   Completed: "#10b981",
   Escalated: "#f59e0b",
@@ -125,10 +138,14 @@ export default function CrimeHeatmapPage() {
   const [chartInstance, setChartInstance] = useState<Chart | null>(null);
   const [selectedSuburb, setSelectedSuburb] = useState<string>("");
   const [chartStatus, setChartStatus] = useState<string>("Loading data...");
+  // Add state for average response time
+  const [averageResponseTime, setAverageResponseTime] = useState<AverageResponseTime | null>(null);
+  const [loadingResponseTime, setLoadingResponseTime] = useState(false);
 
   useEffect(() => {
     async function fetchReports() {
       setLoading(true);
+      setLoadingResponseTime(true);
       try {
         // Fetch main report data
         const res = await fetch(
@@ -223,7 +240,21 @@ export default function CrimeHeatmapPage() {
           setSuburbCounts([]);
         }
 
-        // Fetch fire incidents data if Fire is selected
+        // Fetch average response time
+        const responseTimeRes = await fetch(
+          `https://myappapi-yo3p.onrender.com/getAverageResponseTimeByEmergencyType?emergencyType=${encodeURIComponent(
+            selectedType
+          )}`
+        );
+        const responseTimeData: AverageResponseTimeApiResponse = await responseTimeRes.json();
+
+        if (responseTimeData.success) {
+          setAverageResponseTime(responseTimeData.data);
+        } else {
+          setAverageResponseTime(null);
+        }
+
+        // Fetch fire incidents data if Crime is selected
         if (selectedType === "Crime") {
           const fireRes = await fetch(
             "https://myappapi-yo3p.onrender.com/getDatesByEmergencyType?emergencyType=Crime"
@@ -253,9 +284,11 @@ export default function CrimeHeatmapPage() {
         setTotalReports(0);
         setUniqueSuburbCount(0);
         setFireIncidents([]);
+        setAverageResponseTime(null);
         setChartStatus("Error loading data");
       } finally {
         setLoading(false);
+        setLoadingResponseTime(false);
       }
     }
 
@@ -412,11 +445,20 @@ export default function CrimeHeatmapPage() {
     return icons[type] || "fas fa-chart-bar";
   };
 
-  const renderStats = () => {
-    const avgPerArea = uniqueSuburbCount
-      ? (totalReports / uniqueSuburbCount).toFixed(1)
-      : "0";
+  const getResponseTimeColor = (minutes: number) => {
+    if (minutes <= 5) return "text-success";
+    if (minutes <= 10) return "text-warning";
+    return "text-danger";
+  };
 
+  const getResponseTimeStatus = (minutes: number) => {
+    if (minutes <= 5) return "Excellent";
+    if (minutes <= 10) return "Good";
+    if (minutes <= 15) return "Average";
+    return "Needs Improvement";
+  };
+
+  const renderStats = () => {
     return (
       <div className="d-flex gap-2">
         <div className="stat-badge">
@@ -427,10 +469,12 @@ export default function CrimeHeatmapPage() {
           <i className="fas fa-map-marker-alt me-1"></i>
           {heatData.length} Heat Points
         </div>
-        <div className="stat-badge">
-          <i className="fas fa-chart-line me-1"></i>
-          {avgPerArea} Avg/Area
-        </div>
+        {averageResponseTime && (
+          <div className="stat-badge">
+            <i className="fas fa-clock me-1"></i>
+            {averageResponseTime.averageResponseTimeMinutes.toFixed(1)}min Avg
+          </div>
+        )}
       </div>
     );
   };
@@ -557,6 +601,60 @@ export default function CrimeHeatmapPage() {
           background: rgba(255, 255, 255, 0.95);
           border: 1px solid rgba(255, 255, 255, 0.2);
           backdrop-filter: blur(10px);
+          height: 100%;
+          min-height: 140px;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+        }
+
+        .response-time-card {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          height: 100%;
+          min-height: 140px;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+        }
+
+        .response-time-value {
+          font-size: 2.2rem;
+          font-weight: bold;
+          margin-bottom: 0.3rem;
+          line-height: 1;
+        }
+
+        .response-time-status {
+          font-size: 1rem;
+          opacity: 0.9;
+          margin-bottom: 0.5rem;
+        }
+
+        .response-time-stats {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 8px;
+          padding: 8px 12px;
+          margin-top: 8px;
+          font-size: 0.85rem;
+        }
+
+        .metric-icon {
+          font-size: 2.2rem;
+          margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+          font-size: 2.2rem;
+          font-weight: bold;
+          margin-bottom: 0.3rem;
+          line-height: 1;
+        }
+
+        .metric-label {
+          font-size: 0.9rem;
+          color: #6c757d;
+          margin-bottom: 0;
         }
 
         .form-select {
@@ -571,7 +669,6 @@ export default function CrimeHeatmapPage() {
           box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25);
         }
 
-        /* Hourly Fire Incidents styles */
         .dashboard {
           background-color: white;
           padding: 25px;
@@ -625,6 +722,15 @@ export default function CrimeHeatmapPage() {
             transform: rotate(360deg);
           }
         }
+
+        /* Ensure all metric cards have the same height */
+        .metrics-row .col-md-3 {
+          display: flex;
+        }
+
+        .metrics-row .card {
+          flex: 1;
+        }
       `}</style>
 
       {/* Main Header Card */}
@@ -653,40 +759,75 @@ export default function CrimeHeatmapPage() {
         <div className="row g-4">
           {/* Quick Metrics Row */}
           <div className="col-12">
-            <div className="row g-3">
-              <div className="col-md-4">
+            <div className="row g-3 metrics-row">
+              <div className="col-md-3">
                 <div className="card metric-card">
-                  <div className="card-body text-center">
-                    <i className="fas fa-file-alt fs-2 text-primary mb-2"></i>
-                    <h4 className="text-primary mb-1">
+                  <div className="card-body text-center d-flex flex-column justify-content-center">
+                    <i className="fas fa-file-alt metric-icon text-primary"></i>
+                    <div className="metric-value text-primary">
                       {totalReports.toLocaleString()}
-                    </h4>
-                    <p className="text-muted mb-0">Total Reports</p>
+                    </div>
+                    <p className="metric-label">Total Reports</p>
                   </div>
                 </div>
               </div>
-              <div className="col-md-4">
+              <div className="col-md-3">
                 <div className="card metric-card">
-                  <div className="card-body text-center">
-                    <i className="fas fa-map-marker-alt fs-2 text-success mb-2"></i>
-                    <h4 className="text-success mb-1">{heatData.length}</h4>
-                    <p className="text-muted mb-0">Heat Points</p>
+                  <div className="card-body text-center d-flex flex-column justify-content-center">
+                    <i className="fas fa-map-marker-alt metric-icon text-success"></i>
+                    <div className="metric-value text-success">
+                      {heatData.length}
+                    </div>
+                    <p className="metric-label">Heat Points</p>
                   </div>
                 </div>
               </div>
-            {/*}  <div className="col-md-4">
+              <div className="col-md-3">
                 <div className="card metric-card">
-                  <div className="card-body text-center">
-                    <i className="fas fa-chart-line fs-2 text-warning mb-2"></i>
-                    <h4 className="text-warning mb-1">
+                  <div className="card-body text-center d-flex flex-column justify-content-center">
+                    <i className="fas fa-chart-line metric-icon text-warning"></i>
+                    <div className="metric-value text-warning">
                       {uniqueSuburbCount
                         ? (totalReports / uniqueSuburbCount).toFixed(1)
                         : "0"}
-                    </h4>
-                    <p className="text-muted mb-0">Average per Area</p>
+                    </div>
+                    <p className="metric-label">Average per Area</p>
                   </div>
                 </div>
-              </div>*/}
+              </div>
+              {/* Average Response Time Card */}
+              <div className="col-md-3">
+                <div className="card response-time-card text-white">
+                  <div className="card-body text-center d-flex flex-column justify-content-center">
+                    <i className="fas fa-clock metric-icon opacity-75"></i>
+                    {loadingResponseTime ? (
+                      <div className="spinner-border spinner-border-sm mb-2" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                      </div>
+                    ) : averageResponseTime ? (
+                      <>
+                        <div className={`response-time-value ${getResponseTimeColor(averageResponseTime.averageResponseTimeMinutes)}`}>
+                          {averageResponseTime.averageResponseTimeMinutes.toFixed(1)}min
+                        </div>
+                        <div className="response-time-status">
+                          {getResponseTimeStatus(averageResponseTime.averageResponseTimeMinutes)}
+                        </div>
+                        <div className="response-time-stats">
+                          <small>
+                            {averageResponseTime.respondedReports} of {averageResponseTime.totalReports} responded
+                          </small>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="response-time-value opacity-75">N/A</div>
+                        <div className="response-time-status opacity-75">No data</div>
+                      </>
+                    )}
+                    <p className="metric-label opacity-75 mt-2">Avg Response Time</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 

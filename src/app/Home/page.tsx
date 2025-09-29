@@ -222,7 +222,7 @@ export default function HomePage() {
         <div className="flex gap-6 mb-4 text-sm text-gray-600">
           <div className="flex items-center gap-2">
             <div className="w-5 h-5 bg-red-500 rounded-full border border-white shadow-sm"></div>
-            <span>Incident</span>
+            <span>On-going</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-5 h-5 bg-green-500 rounded-full border border-white shadow-sm"></div>
