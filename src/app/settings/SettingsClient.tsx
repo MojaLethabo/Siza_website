@@ -311,7 +311,7 @@ export default function SettingsClient() {
         }
 
         .nav-title {
-          color: black;
+          color: white;
           font-size: 1.1rem;
           font-weight: 600;
           margin-bottom: 1.5rem;

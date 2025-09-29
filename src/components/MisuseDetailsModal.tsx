@@ -91,7 +91,7 @@ const MisuseDetailsModal: React.FC<MisuseDetailsModalProps> = ({
         <div
           className="px-6 py-4 text-white relative flex-shrink-0"
           style={{
-            background: "linear-gradient(135deg, #ff0000 0%, #764ba2 100%)",
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
           }}
         >
           <div className="flex items-center justify-between">
@@ -100,7 +100,7 @@ const MisuseDetailsModal: React.FC<MisuseDetailsModalProps> = ({
                 className="p-2 bg-white bg-opacity-20 rounded-lg backdrop-blur-sm"
                 style={{
                   background:
-                    "linear-gradient(135deg, #ff0000 0%, #764ba2 100%)",
+                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                 }}
               >
                 <AlertTriangle className="w-5 h-5 text-white" />
@@ -156,11 +156,11 @@ const MisuseDetailsModal: React.FC<MisuseDetailsModalProps> = ({
                     border-radius: 4px;
                   }
                   ::-webkit-scrollbar-thumb {
-                    background: linear-gradient(135deg, #ff0000 0%, #764ba2 100%);
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                     border-radius: 4px;
                   }
                   ::-webkit-scrollbar-thumb:hover {
-                    background: linear-gradient(135deg, #e60000 0%, #5a3d7a 100%);
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                   }
                 `}
               </style>
@@ -186,7 +186,7 @@ const MisuseDetailsModal: React.FC<MisuseDetailsModalProps> = ({
                           className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm"
                           style={{
                             background:
-                              "linear-gradient(135deg, #ff0000 0%, #764ba2 100%)",
+                              "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                           }}
                         >
                           <Hash className="w-4 h-4" />
