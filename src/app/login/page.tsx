@@ -34,7 +34,7 @@ export default function LoginPage() {
       }
 
       const data = await response.json();
-      console.log("🔍 Backend response:", data);
+      console.log(" Backend response:", data);
 
       if (!data.user) {
         throw new Error("User data missing in response");
@@ -98,12 +98,7 @@ export default function LoginPage() {
             </div>
           )}
 
-          <p className={styles.redirectText}>
-            Don&apos;t have an account?{" "}
-            <Link href="/register" className={styles.redirectLink}>
-              Register
-            </Link>
-          </p>
+          
         </form>
       </div>
     </div>
