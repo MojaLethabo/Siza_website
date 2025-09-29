@@ -278,9 +278,6 @@ function LocationDisplay({ location }: { location: string }) {
   return (
     <div>
       <div className="d-flex gap-3 mb-3">
-        <div className="avatar-sm bg-danger bg-opacity-10 d-flex align-items-center justify-content-center rounded flex-shrink-0">
-          <span className="text-danger">MAP</span>
-        </div>
         <div className="flex-grow-1">
           {isLoading ? (
             <div className="d-flex align-items-center gap-2">
@@ -458,18 +455,23 @@ function ReportContent() {
         
         .card {
           border: none;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+          box-shadow: 0 2px 8px rgba(44, 85, 48, 0.1);
+          border-radius: 8px;
+          border: 1px solid #e8efe9;
         }
         
         .card-header {
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           border-bottom: none;
+          border-radius: 8px 8px 0 0;
+          padding: 1.25rem 1.5rem;
         }
         
         .emergency-type-card {
-          border-left: 4px solid;
-          padding: 1rem;
-          border-radius: 0.375rem;
+          border-left: 4px solid #2c5530;
+          padding: 1.25rem;
+          border-radius: 6px;
+          background: #f8fbf9;
         }
         
         .timeline-item {
@@ -485,7 +487,7 @@ function ReportContent() {
           width: 0.5rem;
           height: 0.5rem;
           border-radius: 50%;
-          background: currentColor;
+          background: #2c5530;
         }
         
         .timeline-item:not(:last-child)::after {
@@ -495,36 +497,72 @@ function ReportContent() {
           top: 1.5rem;
           bottom: -1rem;
           width: 1px;
-          background: #dee2e6;
+          background: #e8efe9;
+        }
+
+        .community-bg {
+          background: linear-gradient(135deg, #f8fbf9 0%, #f0f7f2 50%, #e8efe9 100%);
+        }
+
+        .section-divider {
+          height: 1px;
+          background: linear-gradient(90deg, transparent, #e8efe9, transparent);
+          margin: 2rem 0;
+        }
+
+        .community-primary {
+          background: linear-gradient(135deg, #2c5530 0%, #4a7c59 100%);
+        }
+
+        .community-border {
+          border-color: #e8efe9;
+        }
+
+        .community-light-bg {
+          background: #f8fbf9;
         }
       `}</style>
 
-      <div className="container-fluid py-4">
+      <div className="container-fluid py-4 community-bg" style={{ minHeight: '100vh' }}>
         {/* Header Section */}
-        <div className="text-center mb-4">
-          <div className="d-inline-flex align-items-center gap-2 bg-white px-3 py-2 rounded-pill shadow-sm border mb-3">
-            <span className="small fw-medium text-muted">Emergency Response System</span>
+        <div className="text-center mb-5">
+          <div className="d-inline-flex align-items-center gap-2 bg-white px-4 py-3 rounded-lg shadow-sm community-border mb-4">
+            <span className="small fw-semibold text-primary">Community Management System</span>
           </div>
-          <h1 className="h2 fw-bold text-dark mb-2">Emergency Report #{report.ReportID}</h1>
-          <p className="text-muted">Detailed information and evidence for the reported emergency situation</p>
+          <p className="text-gray-600">Detailed information and evidence for the reported emergency situation</p>
         </div>
 
         {/* Status Alert Bar */}
-        <div className={`alert alert-${
-          status === 'Pending' ? 'warning' : 
-          status === 'In Progress' ? 'info' : 
-          'success'
-        } border-start border-4 mb-4`}>
+        <div className={`alert ${
+          status === 'Pending' ? 'alert-warning border-warning' : 
+          status === 'In Progress' ? 'alert-info border-info' : 
+          'alert-success border-success'
+        } border-start border-4 mb-4 rounded-lg community-light-bg`}>
           <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
             <div className="d-flex align-items-center gap-3">
+              {/*
+              <div className={`p-2 rounded ${
+                status === 'Pending' ? 'bg-warning bg-opacity-10' : 
+                status === 'In Progress' ? 'bg-info bg-opacity-10' : 
+                'bg-success bg-opacity-10'
+              }`}>
+                
+              </div>*/}
               <div>
-                <p className="fw-semibold mb-1">Status: {status}</p>
-                <p className="small mb-0">
+                <p className="fw-semibold mb-1 text-black">Status: {status}</p>
+                <p className="small mb-0 text-muted">
                   {status === 'Pending' ? 'Awaiting emergency response' : 
                    status === 'In Progress' ? 'Emergency services are responding' : 
                    'Emergency has been resolved'}
                 </p>
               </div>
+            </div>
+            <div className={`badge ${
+              status === 'Pending' ? 'bg-warning' : 
+              status === 'In Progress' ? 'bg-info' : 
+              'bg-success'
+            }`}>
+              {status}
             </div>
           </div>
         </div>
@@ -536,9 +574,7 @@ function ReportContent() {
             <div className="card mb-4">
               <div className="card-header text-white">
                 <div className="d-flex align-items-center gap-3">
-                  <div className="avatar-sm bg-white bg-opacity-20 d-flex align-items-center justify-content-center rounded">
-                    ALERT
-                  </div>
+                 
                   <div>
                     <h5 className="mb-1">Emergency Details</h5>
                     <p className="mb-0 opacity-75 small">Critical incident information</p>
@@ -550,65 +586,60 @@ function ReportContent() {
                 {/* Emergency Type */}
                 <div className="row g-3 mb-4">
                   <div className="col-12">
-                    <div className={`emergency-type-card ${emergencyConfig.bgColor} bg-opacity-10 border-${emergencyConfig.bgColor.replace('bg-', '')}`}>
-                      <div className="d-flex align-items-center gap-2 mb-2">
-                        <h6 className="fw-semibold mb-0">Emergency Type</h6>
+                    <div className="emergency-type-card">
+                      <div className="d-flex align-items-center justify-content-between mb-2">
+                        <h6 className="fw-semibold mb-0 text-gray-700">Emergency Type</h6>
                       </div>
-                      <p className="h5 fw-bold mb-0">{report.EmergencyType}</p>
+                      <p className="h4 fw-bold mb-0 text-gray-800">{report.EmergencyType}</p>
                     </div>
                   </div>
                 </div>
 
+                <div className="section-divider"></div>
+
                 {/* Time Reported */}
-                <div className="bg-light rounded p-3 mb-4">
-                  <div className="d-flex align-items-center gap-2 mb-2">
-                    <h6 className="fw-semibold mb-0 text-muted">Time Reported</h6>
+                <div className="community-light-bg rounded-lg p-4 mb-4 community-border">
+                  <div className="d-flex align-items-center gap-2 mb-3">
+                    
+                    <h6 className="fw-semibold mb-0 text-gray-700">Time Reported</h6>
                   </div>
-                  <p className="fw-medium mb-1">
-                    {(() => {
-                      const now = new Date();
-                      const reportTime = new Date(report.dateReported);
-                      const diffInMs = now.getTime() - reportTime.getTime();
-                      const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-                      const diffInHours = Math.floor(diffInMinutes / 60);
-                      const remainingMinutes = diffInMinutes % 60;
-                      
-                      if (diffInHours > 0) {
-                        return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ${remainingMinutes > 0 ? `and ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''}` : ''} ago`;
-                      } else {
-                        return `${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`;
-                      }
-                    })()}
-                  </p>
+                  
                   <small className="text-muted">
                     {new Date(report.dateReported).toLocaleString()}
                   </small>
                 </div>
+                
 
                 {/* Description */}
-                <div className="bg-light rounded p-3 mb-4">
-                  <h6 className="fw-semibold text-muted mb-3">Incident Description</h6>
-                  <p className="mb-0 lh-lg">
+                <div className="community-light-bg rounded-lg p-4 mb-4 community-border">
+                  <div className="d-flex align-items-center gap-2 mb-3">
+                    <h6 className="fw-semibold mb-0 text-gray-700">Incident Description</h6>
+                  </div>
+                  <p className="mb-0 lh-lg text-gray-700">
                     {report.EmerDescription}
                   </p>
                 </div>
 
                 {/* Location */}
-                <div className="bg-light rounded p-3 mb-4">
-                  <h6 className="fw-semibold text-muted mb-3">Location</h6>
+                <div className="community-light-bg rounded-lg p-4 mb-4 community-border">
+                  <div className="d-flex align-items-center gap-2 mb-3">
+                    <h6 className="fw-semibold mb-0 text-gray-700">Location</h6>
+                  </div>
                   <LocationDisplay location={report.Report_Location} />
                 </div>
 
                 {/* Shared With */}
-                <div className="bg-light rounded p-3">
-                  <h6 className="fw-semibold text-muted mb-3">Notified Authorities</h6>
-                  <div className="d-flex flex-wrap gap-2">
+                <div className="community-light-bg rounded-lg p-4 community-border">
+                  <div className="d-flex align-items-center gap-2 mb-3">
+                    <h6 className="fw-semibold mb-0 text-gray-700">Shared With</h6>
+                  </div>
+                  
                     {report.SharedWith.split(', ').map((authority, idx) => (
-                      <span key={idx} className="badge bg-primary">
+                      <span key={idx} >
                         {authority}
                       </span>
                     ))}
-                  </div>
+                  
                 </div>
               </div>
             </div>
@@ -617,9 +648,6 @@ function ReportContent() {
             <div className="card">
               <div className="card-header text-white">
                 <div className="d-flex align-items-center gap-3">
-                  <div className="avatar-sm bg-white bg-opacity-20 d-flex align-items-center justify-content-center rounded">
-                    CAM
-                  </div>
                   <div>
                     <h5 className="mb-1">Evidence & Media</h5>
                     <p className="mb-0 opacity-75 small">Visual and audio documentation</p>
@@ -631,23 +659,32 @@ function ReportContent() {
                 {/* Photo Evidence */}
                 {report.MediaPhoto && (
                   <div className="mb-4">
-                    <h6 className="fw-semibold text-muted mb-3">
-                      Photo Evidence
-                    </h6>
+                    <div className="d-flex align-items-center gap-2 mb-3">
+                      
+                      <h6 className="fw-semibold mb-0 text-gray-700">
+                        Photo Evidence
+                      </h6>
+                    </div>
                     <div className="row g-3">
                       {report.MediaPhoto.split(";")
                         .filter(Boolean)
                         .map((img, idx) => (
                           <div key={idx} className="col-sm-6">
-                            <div className="position-relative overflow-hidden rounded border">
-                             <Image
+                            <div className="position-relative overflow-hidden rounded-lg community-border">
+                              <Image
                                 src={`data:image/jpeg;base64,${img}`}
                                 alt={`Emergency photo ${idx + 1}`}
                                 width={500}
                                 height={300}
-                                className="img-fluid"
+                                className="img-fluid w-100"
+                                style={{ height: '200px', objectFit: 'cover' }}
                                 unoptimized
                               />
+                              <div className="position-absolute top-0 end-0 m-2">
+                                <span className="badge bg-dark bg-opacity-50 text-white">
+                                  Photo {idx + 1}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -676,37 +713,44 @@ function ReportContent() {
 
           {/* Sidebar */}
           <div className="col-lg-4">
-            {/* Quick Actions Card */}
+            {/* Quick Actions Card 
             <div className="card mb-4">
               <div className="card-header text-white">
-                <h6 className="mb-0">Quick Actions</h6>
+                <div className="d-flex align-items-center gap-2">
+                  <span>ACT</span>
+                  <h6 className="mb-0">Quick Actions</h6>
+                </div>
               </div>
-              <div className="card-body d-flex flex-column gap-2">
+              <div className="card-body d-flex flex-column gap-3">
                 <a
                   href={`tel:${reporter.PhoneNumber}`}
-                  className="btn btn-danger d-flex align-items-center justify-content-center gap-2"
+                  className="btn btn-danger d-flex align-items-center justify-content-center gap-2 py-2"
                 >
                   Call Reporter Now
                 </a>
                 <a
                   href={`mailto:${reporter.Email}?subject=Emergency Report Update - Report #${report.ReportID}&body=Dear ${reporter.FullName},%0A%0AThis is an update regarding your emergency report #${report.ReportID} for ${report.EmergencyType}.%0A%0AStatus: ${report.Report_Status}%0A%0APlease let us know if you have any additional information or questions.%0A%0ABest regards,%0AEmergency Response Team`}
-                  className="btn btn-primary d-flex align-items-center justify-content-center gap-2"
+                  className="btn btn-primary d-flex align-items-center justify-content-center gap-2 py-2"
                 >
                   Send Email Update
                 </a>
               </div>
             </div>
+              */}
+
 
             {/* Reporter Information Card */}
             <div className="card mb-4">
               <div className="card-header text-white">
-                <h6 className="mb-0">Reporter Information</h6>
+                <div className="d-flex align-items-center gap-2">
+                  <span>REP</span>
+                  <h6 className="mb-0">Reporter Information</h6>
+                </div>
               </div>
               
               <div className="card-body">
                 <div className="d-flex gap-3 mb-4">
                   {reporter.ProfilePhoto ? (
-                    
                     <Image
                       src={
                         reporter.ProfilePhoto.startsWith("http")
@@ -716,35 +760,36 @@ function ReportContent() {
                       alt="Reporter"
                       width={64}
                       height={64}
-                      className="rounded-circle border"
+                      className="rounded-circle border community-border"
                       style={{ width: '64px', height: '64px', objectFit: 'cover' }}
                       unoptimized
                     />
                   ) : (
-                    <div className="avatar avatar-lg">
+                    <div className="avatar avatar-lg bg-primary bg-opacity-10 text-primary border community-border">
                       USER
                     </div>
                   )}
                   <div className="flex-grow-1">
-                    <h6 className="fw-semibold mb-1">{reporter.FullName}</h6>
+                    <h6 className="fw-semibold mb-1 text-gray-800">{reporter.FullName}</h6>
                     <p className="text-muted mb-2">@{reporter.Username}</p>
-                    <span className="badge bg-primary">
+                    <span >
                       {reporter.UserType}
                     </span>
                   </div>
                 </div>
                 
                 <div className="d-flex flex-column gap-3">
-                  <div className="d-flex align-items-center gap-3 p-2 bg-light rounded">
+                  <div className="d-flex align-items-center gap-3 p-3 community-light-bg rounded-lg community-border">
+                    
                     <div className="flex-grow-1">
                       <small className="text-muted">Phone</small>
-                      <p className="fw-medium mb-0">{reporter.PhoneNumber}</p>
+                      <p className="fw-semibold mb-0 text-gray-800">{reporter.PhoneNumber}</p>
                     </div>
                   </div>
-                  <div className="d-flex align-items-center gap-3 p-2 bg-light rounded">
+                  <div className="d-flex align-items-center gap-3 p-3 community-light-bg rounded-lg community-border">
                     <div className="flex-grow-1">
                       <small className="text-muted">Email</small>
-                      <p className="fw-medium mb-0 text-truncate">{reporter.Email}</p>
+                      <p className="fw-semibold mb-0 text-gray-800 text-truncate">{reporter.Email}</p>
                     </div>
                   </div>
                 </div>
@@ -754,11 +799,14 @@ function ReportContent() {
             {/* Timeline Card */}
             <div className="card mb-4">
               <div className="card-header text-white">
-                <h6 className="mb-0">Timeline</h6>
+                <div className="d-flex align-items-center gap-2">
+                  <span>TIME</span>
+                  <h6 className="mb-0">Timeline</h6>
+                </div>
               </div>
               <div className="card-body">
-                <div className="timeline-item text-danger mb-3">
-                  <h6 className="fw-semibold mb-1">Report Created</h6>
+                <div className="timeline-item text-primary mb-3">
+                  <h6 className="fw-semibold mb-1 text-gray-800">Report Created</h6>
                   <small className="text-muted">
                     {formatDistanceToNowStrict(new Date(report.dateReported), {
                       addSuffix: true,
@@ -782,7 +830,7 @@ export default function ReportPage() {
   return (
     <Suspense
       fallback={
-        <div className="container-fluid py-4">
+        <div className="container-fluid py-4 community-bg" style={{ minHeight: '100vh' }}>
           <div className="text-center">
             <div className="spinner-border text-primary" role="status">
               <span className="visually-hidden">Loading...</span>

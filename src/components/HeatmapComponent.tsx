@@ -48,7 +48,7 @@ export default function HeatmapComponent({ data }: Props) {
   return (
     <div className="h-[600px] w-full rounded-lg overflow-hidden shadow-lg bg-white">
       <MapContainer
-        center={[-26.1887, 28.0105]}
+        center={[-26.1918, 27.9997]}
         zoom={13}
         scrollWheelZoom={true}
         style={{ height: "100%", width: "100%" }}

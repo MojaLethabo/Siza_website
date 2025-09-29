@@ -798,7 +798,7 @@ export default function CrimeHeatmapPage() {
               {/* Average Response Time Card */}
               <div className="col-md-3">
                 <div className="card response-time-card text-white">
-                  <div className="card-body text-center d-flex flex-column justify-content-center">
+                  <div className="card-body text-center d-flex flex-column justify-content-center text-white">
                     <i className="fas fa-clock metric-icon opacity-75"></i>
                     {loadingResponseTime ? (
                       <div className="spinner-border spinner-border-sm mb-2" role="status">
@@ -824,7 +824,7 @@ export default function CrimeHeatmapPage() {
                         <div className="response-time-status opacity-75">No data</div>
                       </>
                     )}
-                    <p className="metric-label opacity-75 mt-2">Avg Response Time</p>
+                    <p className="metric-label opacity-75 mt-2 text-White">Avg Response Time</p>
                   </div>
                 </div>
               </div>
