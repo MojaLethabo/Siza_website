@@ -17,15 +17,34 @@ import {
   HelpCircle,
 } from "lucide-react";
 
+// Define types for our data structures
+interface ContentSection {
+  heading: string;
+  content?: string;
+  items?: string[];
+  steps?: string[];
+}
+
+interface GuideSectionContent {
+  title: string;
+  sections: ContentSection[];
+}
+
+// Update the GuideSection interface to specify the icon type
+interface GuideSection {
+  id: string;
+  title: string;
+  icon: React.ReactElement<{ className?: string }>;
+  content: GuideSectionContent;
+}
+
 const UserGuide = () => {
   const [activeSection, setActiveSection] = useState<string | null>(
     "introduction"
   );
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Add this function to your component
   const handleDownloadPDF = () => {
-    // Create a temporary anchor element
     const link = document.createElement("a");
     link.href = "/WEBAPP_UserGuide.pdf";
     link.download = "SIZA_Community_Leader_Guide.pdf";
@@ -34,8 +53,8 @@ const UserGuide = () => {
     document.body.removeChild(link);
   };
 
-  // Guide content structure
-  const guideSections = [
+  // Guide content structure with proper typing
+  const guideSections: GuideSection[] = [
     {
       id: "introduction",
       title: "Introduction",
@@ -94,6 +113,7 @@ const UserGuide = () => {
         ],
       },
     },
+    // ... rest of your guide sections remain the same
     {
       id: "user-management",
       title: "User Management",
@@ -371,10 +391,10 @@ const UserGuide = () => {
     setActiveSection(activeSection === sectionId ? null : sectionId);
   };
 
-  const renderContent = (content: any) => {
+  const renderContent = (content: GuideSectionContent) => {
     return (
       <div className="space-y-6">
-        {content.sections?.map((section: any, index: number) => (
+        {content.sections.map((section: ContentSection, index: number) => (
           <div key={index} className="space-y-3">
             <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
               <div className="w-1 h-6 bg-gradient-to-b from-purple-500 to-blue-600 rounded-full"></div>
@@ -427,7 +447,6 @@ const UserGuide = () => {
           border-radius: 16px;
           padding: 2rem;
           box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
-
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
       `}</style>

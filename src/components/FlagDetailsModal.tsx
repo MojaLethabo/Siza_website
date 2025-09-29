@@ -62,7 +62,7 @@ const FlagDetailsModal: React.FC<FlagDetailsModalProps> = ({
         <div
           className="px-6 py-4 text-white relative flex-shrink-0"
           style={{
-            background: "linear-gradient(135deg, #ff0000 0%, #764ba2 100%)",
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
           }}
         >
           <div className="flex items-center justify-between">
@@ -71,7 +71,7 @@ const FlagDetailsModal: React.FC<FlagDetailsModalProps> = ({
                 className="p-2 bg-white bg-opacity-20 rounded-lg backdrop-blur-sm"
                 style={{
                   background:
-                    "linear-gradient(135deg, #ff0000 0%, #764ba2 100%)",
+                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                 }}
               >
                 <Flag className="w-5 h-5 text-white" />
@@ -127,7 +127,7 @@ const FlagDetailsModal: React.FC<FlagDetailsModalProps> = ({
                     border-radius: 4px;
                   }
                   ::-webkit-scrollbar-thumb {
-                    background: linear-gradient(135deg, #ff0000 0%, #764ba2 100%);
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                     border-radius: 4px;
                   }
                   ::-webkit-scrollbar-thumb:hover {
@@ -158,7 +158,7 @@ const FlagDetailsModal: React.FC<FlagDetailsModalProps> = ({
                             className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm"
                             style={{
                               background:
-                                "linear-gradient(135deg, #ff0000 0%, #764ba2 100%)",
+                                "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                             }}
                           >
                             <Hash className="w-4 h-4" />

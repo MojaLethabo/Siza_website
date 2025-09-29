@@ -62,7 +62,7 @@ const SleepModal: React.FC<SleepModalProps> = ({
         <div
           className="px-6 py-4 text-white relative"
           style={{
-            background: "linear-gradient(135deg, #ff0000 0%, #764ba2 100%)",
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
           }}
         >
           <div className="flex items-center justify-between">
@@ -71,7 +71,7 @@ const SleepModal: React.FC<SleepModalProps> = ({
                 className="p-2 bg-white bg-opacity-20 rounded-lg backdrop-blur-sm"
                 style={{
                   background:
-                    "linear-gradient(135deg, #ff0000 0%, #764ba2 100%)",
+                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                 }}
               >
                 <Shield className="w-5 h-5 text-white" />
@@ -95,7 +95,7 @@ const SleepModal: React.FC<SleepModalProps> = ({
                 className="w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold"
                 style={{
                   background:
-                    "linear-gradient(135deg, #ff0000 0%, #764ba2 100%)",
+                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                 }}
               >
                 <User className="w-6 h-6" />
@@ -191,7 +191,7 @@ const SleepModal: React.FC<SleepModalProps> = ({
               onClick={handleSubmit}
               className="flex-1 px-4 py-3 text-white rounded-xl font-medium transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
               style={{
-                background: "linear-gradient(135deg, #ff0000 0%, #764ba2 100%)",
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                 boxShadow: "0 4px 12px rgba(255, 0, 0, 0.3)",
               }}
             >
