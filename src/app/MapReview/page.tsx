@@ -465,10 +465,6 @@ export default function CrimeHeatmapPage() {
           <i className="fas fa-file-alt me-1"></i>
           {totalReports.toLocaleString()} Reports
         </div>
-        <div className="stat-badge">
-          <i className="fas fa-map-marker-alt me-1"></i>
-          {heatData.length} Heat Points
-        </div>
         {averageResponseTime && (
           <div className="stat-badge">
             <i className="fas fa-clock me-1"></i>
@@ -760,7 +756,7 @@ export default function CrimeHeatmapPage() {
           {/* Quick Metrics Row */}
           <div className="col-12">
             <div className="row g-3 metrics-row">
-              <div className="col-md-3">
+              <div className="col-md-4">
                 <div className="card metric-card">
                   <div className="card-body text-center d-flex flex-column justify-content-center">
                     <i className="fas fa-file-alt metric-icon text-primary"></i>
@@ -771,7 +767,7 @@ export default function CrimeHeatmapPage() {
                   </div>
                 </div>
               </div>
-              <div className="col-md-3">
+             {/*} <div className="col-md-3">
                 <div className="card metric-card">
                   <div className="card-body text-center d-flex flex-column justify-content-center">
                     <i className="fas fa-map-marker-alt metric-icon text-success"></i>
@@ -781,8 +777,8 @@ export default function CrimeHeatmapPage() {
                     <p className="metric-label">Heat Points</p>
                   </div>
                 </div>
-              </div>
-              <div className="col-md-3">
+              </div>*/}
+              <div className="col-md-4">
                 <div className="card metric-card">
                   <div className="card-body text-center d-flex flex-column justify-content-center">
                     <i className="fas fa-chart-line metric-icon text-warning"></i>
@@ -796,38 +792,33 @@ export default function CrimeHeatmapPage() {
                 </div>
               </div>
               {/* Average Response Time Card */}
-              <div className="col-md-3">
-                <div className="card response-time-card text-white">
-                  <div className="card-body text-center d-flex flex-column justify-content-center text-white">
-                    <i className="fas fa-clock metric-icon opacity-75"></i>
-                    {loadingResponseTime ? (
-                      <div className="spinner-border spinner-border-sm mb-2" role="status">
-                        <span className="visually-hidden">Loading...</span>
-                      </div>
-                    ) : averageResponseTime ? (
-                      <>
-                        <div className={`response-time-value ${getResponseTimeColor(averageResponseTime.averageResponseTimeMinutes)}`}>
-                          {averageResponseTime.averageResponseTimeMinutes.toFixed(1)}min
-                        </div>
-                        <div className="response-time-status">
-                          {getResponseTimeStatus(averageResponseTime.averageResponseTimeMinutes)}
-                        </div>
-                        <div className="response-time-stats">
-                          <small>
-                            {averageResponseTime.respondedReports} of {averageResponseTime.totalReports} responded
-                          </small>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="response-time-value opacity-75">N/A</div>
-                        <div className="response-time-status opacity-75">No data</div>
-                      </>
-                    )}
-                    <p className="metric-label opacity-75 mt-2 text-White">Avg Response Time</p>
-                  </div>
-                </div>
-              </div>
+     <div className="col-md-4">
+  <div className="card metric-card">
+    <div className="card-body text-center d-flex flex-column justify-content-center">
+      <i className="fas fa-clock metric-icon text-danger"></i>
+      {loadingResponseTime ? (
+        <div className="spinner-border spinner-border-sm mb-2 text-danger" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      ) : averageResponseTime ? (
+        <>
+          <div className={`metric-value text-danger`}>
+            {averageResponseTime.averageResponseTimeMinutes.toFixed(1)}min
+          </div>
+          <div className="response-time-status text-muted small">
+            {getResponseTimeStatus(averageResponseTime.averageResponseTimeMinutes)}
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="metric-value text-danger">N/A</div>
+          <div className="response-time-status text-muted small">No data</div>
+        </>
+      )}
+      <p className="metric-label">Avg Response Time</p>
+    </div>
+  </div>
+</div>
             </div>
           </div>
 

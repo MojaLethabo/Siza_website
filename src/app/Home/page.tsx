@@ -157,7 +157,7 @@ export default function HomePage() {
       </header>
 
       {/* Dashboard Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-10">
         {[
           {
             title: "Community Members",
@@ -168,7 +168,7 @@ export default function HomePage() {
             icon: "fas fa-users",
             color: "text-blue-600",
           },
-          
+         
           {
             title: "Reports",
             count:
