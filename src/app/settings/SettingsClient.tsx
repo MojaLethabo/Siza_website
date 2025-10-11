@@ -40,7 +40,7 @@ export default function SettingsClient() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Controlled tab index
-  const tabs = ["account", "appearance", "notifications", "language"] as const;
+  const tabs = ["account"] as const;
   type Tab = (typeof tabs)[number];
   const [activeTab, setActiveTab] = useState<Tab>("account");
 
@@ -275,7 +275,7 @@ export default function SettingsClient() {
           <div className="spinner-border text-primary" role="status">
             <span className="visually-hidden">Loading...</span>
           </div>
-          <p className="mt-3 text-muted">LoadingSettingss...</p>
+          <p className="mt-3 text-muted">Loading Settings...</p>
         </div>
       </div>
     );
@@ -673,104 +673,6 @@ export default function SettingsClient() {
                     >
                       <i className="fas fa-key me-2"></i>Change Password
                     </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Appearance Settings */}
-              {activeTab === "appearance" && (
-                <div>
-                  <h4 className="section-title">Appearance Settings</h4>
-                  <div className="row">
-                    <div className="col-md-8">
-                      <div className="d-flex align-items-center justify-content-between p-3 bg-light rounded-3">
-                        <div>
-                          <h6 className="mb-1 fw-semibold">Dark Mode</h6>
-                          <small className="text-muted">
-                            Switch between light and dark theme
-                          </small>
-                        </div>
-                        <div className="form-check form-switch">
-                          <input
-                            className="form-check-input"
-                            type="checkbox"
-                            checked={currentUser.DarkMode === "Yes"}
-                            onChange={toggleAppearance}
-                            id="darkModeSwitch"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Notifications Settings */}
-              {activeTab === "notifications" && (
-                <div>
-                  <h4 className="section-title">Notification Preferences</h4>
-                  <div className="row">
-                    {[
-                      {
-                        key: "email",
-                        title: "Email Notifications",
-                        desc: "Receive updates via email",
-                        icon: "fas fa-envelope",
-                      },
-                      {
-                        key: "sms",
-                        title: "SMS Notifications",
-                        desc: "Receive updates via SMS",
-                        icon: "fas fa-sms",
-                      },
-                      {
-                        key: "push",
-                        title: "Push Notifications",
-                        desc: "Receive browser notifications",
-                        icon: "fas fa-bell",
-                      },
-                    ].map(({ key, title, desc, icon }) => (
-                      <div className="col-md-6 mb-3" key={key}>
-                        <div className="d-flex align-items-center justify-content-between p-3 bg-light rounded-3">
-                          <div className="d-flex align-items-center">
-                            <i className={`${icon} text-primary me-3`}></i>
-                            <div>
-                              <h6 className="mb-0 fw-semibold">{title}</h6>
-                              <small className="text-muted">{desc}</small>
-                            </div>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              className="form-check-input"
-                              type="checkbox"
-                              id={key}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Language Settings */}
-              {activeTab === "language" && (
-                <div>
-                  <h4 className="section-title">Language & Region</h4>
-                  <div className="row">
-                    <div className="col-md-6">
-                      <label className="form-label fw-semibold">
-                        <i className="fas fa-globe me-2"></i>
-                        Select Language
-                      </label>
-                      <select className="form-select">
-                        <option>English</option>
-                        <option>Spanish</option>
-                        <option>French</option>
-                        <option>German</option>
-                        <option>Chinese</option>
-                      </select>
-                    </div>
                   </div>
                 </div>
               )}

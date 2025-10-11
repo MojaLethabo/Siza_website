@@ -37,7 +37,7 @@ const greenPinIcon = new L.Icon({
 export default function MapComponent({ incidents, router }: MapComponentProps) {
   return (
     <MapContainer
-      center={[-26.14, 28.0125]}
+      center={[-26.1918, 27.9997]}
       zoom={14}
       scrollWheelZoom={true}
       style={{ height: "100%", width: "100%" }}

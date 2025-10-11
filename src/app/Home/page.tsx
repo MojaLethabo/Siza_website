@@ -143,7 +143,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-gradient-to-tr from-green-50 via-blue-50 to-white p-6 font-sans text-gray-800">
       <header className="flex flex-col md:flex-row justify-between items-center mb-8">
         <h1 className="text-3xl font-extrabold text-blue-700 mb-4 md:mb-0">
-          Siza Community Watch Dashboard 
+          Community Watch Dashboard 
           
         </h1>
         {/*<div className="flex gap-3">
@@ -157,7 +157,7 @@ export default function HomePage() {
       </header>
 
       {/* Dashboard Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-10">
         {[
           {
             title: "Community Members",
@@ -168,12 +168,7 @@ export default function HomePage() {
             icon: "fas fa-users",
             color: "text-blue-600",
           },
-          {
-            title: "Active members",
-            count: "254",
-            icon: "fas fa-user-check",
-            color: "text-green-600",
-          },
+         
           {
             title: "Reports",
             count:
