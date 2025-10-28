@@ -40,9 +40,16 @@ export default function SettingsClient() {
   const [demoteLoading, setDemoteLoading] = useState(false);
   const [demoteError, setDemoteError] = useState<string | null>(null);
 
+  // Checkbox state for demote confirmation
+  const [isDemoteConfirmed, setIsDemoteConfirmed] = useState(false);
+
   // Profile photo upload
   const [photoError, setPhotoError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Success popup state
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   // Fetch user data on mount
   useEffect(() => {
@@ -77,6 +84,16 @@ export default function SettingsClient() {
     fetchUserData();
   }, [router]);
 
+  // Show success popup
+  const showSuccessMessage = (message: string) => {
+    setSuccessMessage(message);
+    setShowSuccessPopup(true);
+    setTimeout(() => {
+      setShowSuccessPopup(false);
+      setSuccessMessage("");
+    }, 3000); // Hide after 3 seconds
+  };
+
   // Handlers
   const startEdit = (field: string) => {
     setEditingField(field);
@@ -106,6 +123,7 @@ export default function SettingsClient() {
       localStorage.setItem("admin", JSON.stringify(updatedUser));
       updateUser(updatedUser);
       setEditingField(null);
+      showSuccessMessage("Profile updated successfully!");
     } catch (err) {
       console.error("Full error:", err);
       setError("Failed to update profile");
@@ -156,6 +174,7 @@ export default function SettingsClient() {
               })
             );
             updateUser({ ...currentUser, ProfilePhoto: base64 });
+            showSuccessMessage("Profile photo updated successfully!");
           } catch (error) {
             setPhotoError("Failed to update profile photo");
             console.error("Full error:", error);
@@ -205,6 +224,8 @@ export default function SettingsClient() {
       }
 
       setPwdSuccess(true);
+      showSuccessMessage("Password updated successfully!");
+      
       setTimeout(() => {
         setShowPwdModal(false);
         setOldPwd("");
@@ -217,37 +238,60 @@ export default function SettingsClient() {
     }
   };
 
-  const handleDemoteToMember = async () => {
+  const handleDemoteToVolunteer = async () => {
     if (!currentUser) return;
 
     setDemoteLoading(true);
     setDemoteError(null);
 
     try {
+      console.log('Attempting to demote user:', currentUser.UserID);
+      
       const response = await fetch(
-        `https://myappapi-yo3p.onrender.com/api/user/${currentUser.UserID}/role`,
+        `https://myappapi-yo3p.onrender.com/api/user/${currentUser.UserID}/set-volunteer`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ role: "member" }),
         }
       );
 
+      console.log('Response status:', response.status);
+      
+      const data = await response.json();
+      
       if (!response.ok) {
-        throw new Error("Failed to demote user");
+        throw new Error(data.error || "Failed to set role to Volunteer");
       }
 
-      // Success - log out and redirect
-      logout();
-      localStorage.removeItem("admin");
-      router.push("/login");
+      // Success - check for success flag in response
+      if (data.success) {
+        console.log('Success response:', data);
+        
+        // Show success message before logging out
+        showSuccessMessage("Successfully demoted to Volunteer! Logging out...");
+        
+        // Wait a moment for the user to see the success message, then log out
+        setTimeout(() => {
+          logout();
+          localStorage.removeItem("admin");
+          router.push("/login");
+        }, 2000);
+      } else {
+        throw new Error(data.error || "Failed to set role to Volunteer");
+      }
       
-    } catch (err) {
-      console.error("Demote error:", err);
-      setDemoteError("Failed to demote account. Please try again.");
-    } finally {
-      setDemoteLoading(false);
     }
+    catch (err: unknown) {
+  console.error("Demote error:", err);
+  
+  if (err instanceof Error) {
+    setDemoteError(err.message);
+  } else {
+    setDemoteError("Failed to set role to Volunteer. Please try again.");
+  }
+} finally {
+  setDemoteLoading(false);
+} 
   };
 
   if (loading) {
@@ -426,42 +470,84 @@ export default function SettingsClient() {
           transform: scale(1.1);
         }
 
-        .danger-zone {
-          border-left: 4px solid #dc3545;
-          background: #fff5f5;
+        .border-left-danger {
+          border-left: 4px solid #dc3545 !important;
         }
 
-        .demote-btn {
-          background: #dc3545;
+        .bg-light {
+          background-color: #f8f9fa !important;
+        }
+
+        /* Success Popup Styles */
+        .success-popup {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: #28a745;
           color: white;
-          border: none;
-          padding: 0.75rem 1.5rem;
+          padding: 1rem 1.5rem;
           border-radius: 8px;
-          font-weight: 500;
-          transition: all 0.2s;
+          box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+          z-index: 9999;
+          animation: slideIn 0.3s ease-out;
           display: flex;
           align-items: center;
           gap: 0.5rem;
+          max-width: 400px;
         }
 
-        .demote-btn:hover {
-          background: #c82333;
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+        .success-popup.fade-out {
+          animation: slideOut 0.3s ease-in;
         }
 
-        .demote-btn:disabled {
-          background: #6c757d;
-          cursor: not-allowed;
-          transform: none;
-          box-shadow: none;
+        @keyframes slideIn {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
         }
 
-        .warning-icon {
-          color: #dc3545;
-          font-size: 1.2rem;
+        @keyframes slideOut {
+          from {
+            transform: translateX(0);
+            opacity: 1;
+          }
+          to {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+        }
+
+        /* Enhanced responsive design */
+        @media (max-width: 768px) {
+          .settings-section {
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+          }
+          
+          .field-row {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+          }
+          
+          .field-label {
+            min-width: auto;
+          }
         }
       `}</style>
+
+      {/* Success Popup */}
+      {showSuccessPopup && (
+        <div className="success-popup">
+          <i className="fas fa-check-circle"></i>
+          <span>{successMessage}</span>
+        </div>
+      )}
 
       <div className="container-fluid py-4">
         <div className="card">
@@ -639,34 +725,40 @@ export default function SettingsClient() {
               </div>
             </div>
 
-            {/* Danger Zone - Demote from Admin */}
-            <div className="settings-section danger-zone">
-              <h5 className="mb-4 text-danger">
-                <i className="fas fa-exclamation-triangle me-2"></i>
-                Danger Zone
-              </h5>
-              <div className="field-row">
-                <div className="field-label text-danger">
-                  <i className="fas fa-user-slash me-2"></i>
-                  Demote from Admin
-                </div>
-                <div className="field-value">
-                  <p className="mb-1 text-muted">
-                    Remove admin privileges and become a regular community member
-                  </p>
-                  <small className="text-danger">
-                    <i className="fas fa-exclamation-circle me-1"></i>
-                    This action cannot be undone. You will lose access to admin features.
-                  </small>
-                </div>
+            {/* Clean Danger Zone */}
+            <div className="settings-section border-left-danger">
+              <div className="d-flex align-items-center justify-content-between mb-3">
                 <div>
-                  <button
-                    className="demote-btn"
-                    onClick={() => setShowDemoteModal(true)}
-                  >
-                    <i className="fas fa-user-minus"></i>
-                    Demote to Member
-                  </button>
+                  <h5 className="text-danger mb-1">
+                    <i className="fas fa-exclamation-triangle me-2"></i>
+                    Danger Zone
+                  </h5>
+                  <p className="text-muted small mb-0">Irreversible account actions</p>
+                </div>
+              </div>
+              
+              <div className="border rounded p-4 bg-light">
+                <div className="row align-items-center">
+                  <div className="col-md-8">
+                    <h6 className="text-danger mb-2">Demote from Admin</h6>
+                    <p className="text-muted mb-2">
+                      Remove your administrative privileges and become a Volunteer.
+                    </p>
+                    <div className="text-danger small">
+                      <i className="fas fa-exclamation-circle me-1"></i>
+                      This action cannot be undone. You will lose access to all admin features.
+                    </div>
+                  </div>
+                  
+                  <div className="col-md-4 text-end">
+                    <button
+                      className="btn btn-outline-danger"
+                      onClick={() => setShowDemoteModal(true)}
+                    >
+                      <i className="fas fa-user-minus me-2"></i>
+                      Demote to Volunteer
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -778,7 +870,10 @@ export default function SettingsClient() {
                   </h5>
                   <button
                     className="btn-close btn-close-white"
-                    onClick={() => setShowDemoteModal(false)}
+                    onClick={() => {
+                      setShowDemoteModal(false);
+                      setIsDemoteConfirmed(false);
+                    }}
                     disabled={demoteLoading}
                   />
                 </div>
@@ -791,7 +886,7 @@ export default function SettingsClient() {
                   )}
                   
                   <div className="text-center mb-4">
-                    <i className="fas fa-user-slash warning-icon fa-3x mb-3"></i>
+                    <i className="fas fa-user-slash text-danger fa-3x mb-3"></i>
                     <h4 className="text-danger">Are you sure?</h4>
                   </div>
 
@@ -800,7 +895,7 @@ export default function SettingsClient() {
                       <i className="fas fa-info-circle me-2"></i>
                       Important Notice
                     </h6>
-                    <p className="mb-2">You are about to remove your admin privileges and become a regular community member.</p>
+                    <p className="mb-2">You are about to remove your admin privileges and become a Volunteer.</p>
                     <ul className="mb-0 ps-3">
                       <li>You will lose access to admin dashboard and features</li>
                       <li>You will no longer be able to manage users or content</li>
@@ -814,6 +909,8 @@ export default function SettingsClient() {
                       className="form-check-input"
                       type="checkbox"
                       id="confirmDemote"
+                      checked={isDemoteConfirmed}
+                      onChange={(e) => setIsDemoteConfirmed(e.target.checked)}
                     />
                     <label className="form-check-label text-danger fw-semibold" htmlFor="confirmDemote">
                       I understand the consequences and wish to proceed
@@ -823,7 +920,10 @@ export default function SettingsClient() {
                 <div className="modal-footer">
                   <button
                     className="btn btn-light"
-                    onClick={() => setShowDemoteModal(false)}
+                    onClick={() => {
+                      setShowDemoteModal(false);
+                      setIsDemoteConfirmed(false);
+                    }}
                     disabled={demoteLoading}
                   >
                     <i className="fas fa-times me-2"></i>
@@ -831,8 +931,8 @@ export default function SettingsClient() {
                   </button>
                   <button
                     className="btn btn-danger"
-                    onClick={handleDemoteToMember}
-                    disabled={demoteLoading}
+                    onClick={handleDemoteToVolunteer}
+                    disabled={demoteLoading || !isDemoteConfirmed}
                   >
                     {demoteLoading ? (
                       <>
@@ -844,7 +944,7 @@ export default function SettingsClient() {
                     ) : (
                       <>
                         <i className="fas fa-user-minus me-2"></i>
-                        Yes, Demote to Member
+                        Yes, Demote to Volunteer
                       </>
                     )}
                   </button>

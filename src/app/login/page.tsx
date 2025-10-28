@@ -11,12 +11,14 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false); // 👈 new state
   const router = useRouter();
   const { login } = useAuth();
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMessage("");
+    setLoading(true); // 👈 start loading
 
     try {
       const response = await fetch(
@@ -34,7 +36,7 @@ export default function LoginPage() {
       }
 
       const data = await response.json();
-      console.log(" Backend response:", data);
+      console.log("Backend response:", data);
 
       if (!data.user) {
         throw new Error("User data missing in response");
@@ -52,6 +54,8 @@ export default function LoginPage() {
       } else {
         setMessage("Something went wrong. Please try again.");
       }
+    } finally {
+      setLoading(false); // 👈 stop loading
     }
   };
 
@@ -86,7 +90,9 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
           />
 
-          <button type="submit">Login</button>
+          <button type="submit" disabled={loading}>
+            {loading ? "Loading..." : "Login"}
+          </button>
 
           {message && (
             <div
@@ -97,8 +103,6 @@ export default function LoginPage() {
               {message}
             </div>
           )}
-
-          
         </form>
       </div>
     </div>

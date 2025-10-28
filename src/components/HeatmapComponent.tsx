@@ -48,11 +48,12 @@ export default function HeatmapComponent({ data }: Props) {
   return (
     <div className="h-[600px] w-full rounded-lg overflow-hidden shadow-lg bg-white">
       <MapContainer
-        center={[-26.1918, 27.9997]}
-        zoom={13}
+        center={[-26.180980, 27.989677]}
+        zoom={15}
         scrollWheelZoom={true}
         style={{ height: "100%", width: "100%" }}
       >
+        
         <TileLayer
           attribution='&copy; <a href="https://carto.com/">CARTO</a> & <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
