@@ -41,7 +41,7 @@ interface Report {
   ReportID: number;
   EmergencyType: string;
   EmerDescription: string;
-  Report_Location: string;
+  suburbName: string;
   Report_Status: string;
   dateReported: string;
 }
@@ -466,6 +466,7 @@ const UserProfilePage = () => {
                     </small>
                   </div>
                 </div>
+                
               </div>
             </div>
 
@@ -591,7 +592,7 @@ const UserProfilePage = () => {
                             Report ID
                             {getSortIcon('ReportID')}
                           </th>
-                          <th className="text-black">Report Details</th>
+                          
                           <th className="text-black">Location</th>
                           <th className="text-black">Status</th>
                           <th 
@@ -617,24 +618,11 @@ const UserProfilePage = () => {
                                   #{report.ReportID}
                                 </button>
                               </td>
-                              <td>
-                                <div className="d-flex align-items-center">
-                                  <span className={`priority-dot ${priority.color}`}></span>
-                                  <div>
-                                    <div className="fw-semibold">{report.EmergencyType}</div>
-                                    <small className="text-muted text-truncate d-block" style={{maxWidth: '250px'}}>
-                                      {report.EmerDescription}
-                                    </small>
-                                    <small className="badge bg-light text-dark">
-                                      {priority.level}
-                                    </small>
-                                  </div>
-                                </div>
-                              </td>
+                             
                               <td>
                                 <div className="d-flex align-items-center">
                                   <MapPin className="text-muted me-2" size={14} />
-                                  <small>{report.Report_Location}</small>
+                                  <small>{report.suburbName}</small>
                                 </div>
                               </td>
                               <td>
