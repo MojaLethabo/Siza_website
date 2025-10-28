@@ -26,7 +26,8 @@ type Nomination = {
 type Vote = {
   VoteID: number;
   VoterID: number;
-  NomineeID: number;
+  NominationID: number; // This is the NominationID from the Nominations table
+  NomineeUserID: number; // This is the actual user who was nominated
   VotedAt: string;
 };
 
@@ -74,64 +75,92 @@ export default function VotingSessionPage() {
   const [selectedNomination, setSelectedNomination] =
     useState<Nomination | null>(null);
   const [hasSessionEnded, setHasSessionEnded] = useState(false);
+  const [canStartNewSession, setCanStartNewSession] = useState(false);
+  const [hasActiveSession, setHasActiveSession] = useState(false);
+  const [isInTop3, setIsInTop3] = useState(false);
+  const [top3Position, setTop3Position] = useState(0);
 
   const BASE =
     process.env.NEXT_PUBLIC_BACKEND_URL || "https://myappapi-yo3p.onrender.com";
 
+  // Define fetchData outside useEffect so it's accessible everywhere
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+
+      // Check if session has ended
+      const endCheckRes = await fetch(`${BASE}/api/voting-settings/has-ended`);
+      const endCheckData = await endCheckRes.json();
+      setHasSessionEnded(endCheckData.hasEnded);
+
+      // Check and disable expired sessions
+      await fetch(`${BASE}/api/voting-settings/check-expiry`, {
+        method: "PUT",
+      });
+
+      const [settingsRes, nominationsRes, votesRes, usersRes] =
+        await Promise.all([
+          fetch(`${BASE}/api/voting-settings`),
+          fetch(`${BASE}/api/nominations`),
+          fetch(`${BASE}/api/votes`),
+          fetch(`${BASE}/api/users-minimal`),
+        ]);
+
+      const settings = await settingsRes.json();
+      setVotingSettings(settings);
+      setNominations(await nominationsRes.json());
+      setVotes(await votesRes.json());
+      setUsers(await usersRes.json());
+
+      // Check if we can start a new session
+      const canStart = endCheckData.hasEnded && !settings.VotingEnabled;
+      setCanStartNewSession(canStart);
+      setHasActiveSession(settings.VotingEnabled);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Then use it in useEffect
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        // Add to fetchData function
-        const endCheckRes = await fetch(
-          "https://myappapi-yo3p.onrender.com/api/voting-settings/has-ended"
-        );
-        const endCheckData = await endCheckRes.json();
-        setHasSessionEnded(endCheckData.hasEnded);
-
-        // First: Check and disable expired sessions
-        await fetch(
-          "https://myappapi-yo3p.onrender.com/api/voting-settings/check-expiry",
-          { method: "PUT" }
-        );
-
-        const [settingsRes, nominationsRes, votesRes, usersRes] =
-          await Promise.all([
-            fetch(`${BASE}/api/voting-settings`),
-            fetch(`${BASE}/api/nominations`),
-            fetch(`${BASE}/api/votes`),
-            fetch(`${BASE}/api/users-minimal`),
-          ]);
-
-        setVotingSettings(await settingsRes.json());
-        setNominations(await nominationsRes.json());
-        setVotes(await votesRes.json());
-        setUsers(await usersRes.json());
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchData();
   }, []);
 
-  useEffect(() => {
-    if (votes.length > 0) {
-      const counts = votes.reduce((acc, vote) => {
-        acc[vote.NomineeID] = (acc[vote.NomineeID] || 0) + 1;
-        return acc;
-      }, {} as Record<number, number>);
-      setVoteCounts(counts);
-      setNominations((prevNominations) =>
-        prevNominations.map((nomination) => ({
-          ...nomination,
-          VoteCount: counts[nomination.NomineeID] || 0,
-        }))
-      );
-    }
-  }, [votes]);
+  const startNewVotingSession = async () => {
+    if (!currentUser) return;
 
+    try {
+      const startDate = new Date();
+      const endDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 1 week default
+
+      const response = await fetch(`${BASE}/api/voting-settings/new-session`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          StartDate: startDate.toISOString(),
+          EndDate: endDate.toISOString(),
+          UpdatedBy: currentUser.UserID,
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert("New voting session started successfully!");
+        // Refresh data to show new empty session
+        fetchData(); // This will now work since fetchData is defined in scope
+      } else {
+        const error = await response.json();
+        alert(error.error || "Failed to start new session");
+      }
+    } catch (error) {
+      console.error("Error starting new session:", error);
+      alert("An error occurred while starting new session");
+    }
+  };
   const toggleVotingSession = async () => {
     const newSettings = {
       ...votingSettings,
@@ -139,7 +168,7 @@ export default function VotingSessionPage() {
       UpdatedBy: currentUser?.UserID,
     };
     try {
-      const response = await fetch(`${BASE}/api/voting-settings`, {
+      const response = await fetch(`${BASE}/api/voting-settings/update`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -154,6 +183,62 @@ export default function VotingSessionPage() {
     }
   };
 
+  const promoteTop3 = async () => {
+    try {
+      const response = await fetch(`${BASE}/api/voting-settings/promote-top3`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(`${result.message}\n${result.note || ""}`);
+      } else {
+        const error = await response.json();
+        alert(error.error || "Failed to promote top nominees");
+      }
+    } catch (error) {
+      console.error("Error promoting top nominees:", error);
+      alert("An error occurred while promoting top nominees");
+    }
+  };
+
+  const checkTop3Status = async (userId: number) => {
+    try {
+      const response = await fetch(
+        `${BASE}/api/voting-settings/is-top3/${userId}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setIsInTop3(data.isInTop3);
+        setTop3Position(data.position || 0);
+      }
+    } catch (error) {
+      console.error("Error checking top 3 status:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (votes.length > 0) {
+      // Count votes by NomineeUserID (the actual user)
+      const counts = votes.reduce((acc, vote) => {
+        acc[vote.NomineeUserID] = (acc[vote.NomineeUserID] || 0) + 1;
+        return acc;
+      }, {} as Record<number, number>);
+      setVoteCounts(counts);
+
+      // Update nominations with correct vote counts
+      setNominations((prevNominations) =>
+        prevNominations.map((nomination) => ({
+          ...nomination,
+          VoteCount: counts[nomination.NomineeID] || 0, // Use NomineeID (UserID)
+        }))
+      );
+    }
+  }, [votes]);
+
   const updateVotingDates = async (start: Date, end: Date) => {
     const newSettings = {
       ...votingSettings,
@@ -162,7 +247,7 @@ export default function VotingSessionPage() {
       UpdatedBy: currentUser?.UserID,
     };
     try {
-      const response = await fetch(`${BASE}/api/voting-settings`, {
+      const response = await fetch(`${BASE}/api/voting-settings/update`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -216,13 +301,13 @@ export default function VotingSessionPage() {
     }
   };
 
-  const handleVote = async (nomineeId: number) => {
+  const handleVote = async (nomineeUserId: number) => {
     if (!currentUser) return;
 
     try {
-      const newVote: Omit<Vote, "VoteID"> = {
+      const newVote = {
         VoterID: currentUser.UserID,
-        NomineeID: nomineeId,
+        NomineeID: nomineeUserId, // This is the UserID of the nominee
         VotedAt: new Date().toISOString(),
       };
       const response = await fetch(`${BASE}/api/votes`, {
@@ -235,6 +320,9 @@ export default function VotingSessionPage() {
       if (response.ok) {
         const votesRes = await fetch(`${BASE}/api/votes`);
         setVotes(await votesRes.json());
+      } else {
+        const error = await response.json();
+        alert(error.error || "Failed to submit vote");
       }
     } catch (error) {
       console.error("Error submitting vote:", error);
@@ -285,9 +373,34 @@ export default function VotingSessionPage() {
       ? votes.some(
           (vote) =>
             vote.VoterID === currentUser.UserID &&
-            vote.NomineeID === nomination.NomineeID
+            vote.NomineeUserID === nomination.NomineeID // Compare with actual user ID
         )
       : false;
+
+    const [isNomineeInTop3, setIsNomineeInTop3] = useState(false);
+    const [nomineePosition, setNomineePosition] = useState(0);
+
+    // Check if this nominee is in top 3 when modal opens
+    useEffect(() => {
+      const checkNomineeTop3 = async () => {
+        try {
+          const response = await fetch(
+            `${BASE}/api/voting-settings/is-top3/${nomination.NomineeID}`
+          );
+          if (response.ok) {
+            const data = await response.json();
+            setIsNomineeInTop3(data.isInTop3);
+            setNomineePosition(data.position || 0);
+          }
+        } catch (error) {
+          console.error("Error checking nominee top 3 status:", error);
+        }
+      };
+
+      if (nomination.NomineeID) {
+        checkNomineeTop3();
+      }
+    }, [nomination.NomineeID]);
 
     return (
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
@@ -448,8 +561,8 @@ export default function VotingSessionPage() {
 
               <div className="flex justify-between items-center">
                 <div>
-                  {/* Add promotion button at the bottom */}
-                  {!isVotingActive && isSessionEnded && (
+                  {/* Add promotion button at the bottom - ONLY for top 3 */}
+                  {!isVotingActive && isSessionEnded && isNomineeInTop3 && (
                     <div className="mt-6 pt-4 border-t border-gray-200">
                       <button
                         onClick={() => nominee && promoteUser(nominee.UserID)}
@@ -467,11 +580,12 @@ export default function VotingSessionPage() {
                             clipRule="evenodd"
                           />
                         </svg>
-                        Promote to Community Leader
+                        Promote to Community Leader{" "}
+                        {nomineePosition > 0 && `(#${nomineePosition})`}
                       </button>
                       <p className="text-gray-500 text-sm mt-2 text-center">
-                        This nominee has been elected and will now become a
-                        community leader
+                        This nominee is ranked #{nomineePosition} and will now
+                        become a community leader
                       </p>
                     </div>
                   )}
@@ -669,23 +783,22 @@ export default function VotingSessionPage() {
                     <i className="fas fa-cog me-2"></i>
                     Voting Session Status
                   </h4>
-                 <div
-  className={`px-3 py-1 rounded-pill text-white ${
-    votingSettings.VotingEnabled
-      ? "bg-success bg-opacity-10"
-      : "bg-secondary bg-opacity-10"
-  }`}
->
-  <i
-    className={`fas ${
-      votingSettings.VotingEnabled
-        ? "fa-check-circle"
-        : "fa-pause-circle"
-    } me-1`}
-  ></i>
-  {votingSettings.VotingEnabled ? "Active" : "Inactive"}
-</div>
-
+                  <div
+                    className={`px-3 py-1 rounded-pill text-white ${
+                      votingSettings.VotingEnabled
+                        ? "bg-success bg-opacity-10"
+                        : "bg-secondary bg-opacity-10"
+                    }`}
+                  >
+                    <i
+                      className={`fas ${
+                        votingSettings.VotingEnabled
+                          ? "fa-check-circle"
+                          : "fa-pause-circle"
+                      } me-1`}
+                    ></i>
+                    {votingSettings.VotingEnabled ? "Active" : "Inactive"}
+                  </div>
                 </div>
 
                 <div className="row g-3">
@@ -728,7 +841,8 @@ export default function VotingSessionPage() {
                   </div>
                 </div>
 
-                <div className="d-flex gap-2 mt-3">
+                {/* Add this after your current voting status buttons <div className="d-flex gap-2 mt-3"> */}
+                <div className="d-flex gap-2 mt-3 flex-wrap">
                   <button
                     onClick={() => {
                       const start = new Date();
@@ -738,6 +852,7 @@ export default function VotingSessionPage() {
                       updateVotingDates(start, end);
                     }}
                     className="btn btn-outline-primary"
+                    disabled={hasActiveSession}
                   >
                     <i className="fas fa-calendar-week me-2"></i>1 Week Session
                   </button>
@@ -749,6 +864,7 @@ export default function VotingSessionPage() {
                       updateVotingDates(start, end);
                     }}
                     className="btn btn-outline-primary"
+                    disabled={hasActiveSession}
                   >
                     <i className="fas fa-clock me-2"></i>
                     24-Hour Session
@@ -761,6 +877,7 @@ export default function VotingSessionPage() {
                         ? "btn-danger"
                         : "btn-success"
                     }`}
+                    disabled={!votingSettings.VotingEnabled && hasSessionEnded}
                   >
                     <i
                       className={`fas ${
@@ -771,8 +888,62 @@ export default function VotingSessionPage() {
                       ? "Stop Voting"
                       : "Start Voting"}
                   </button>
+
+                  {/* Add New Session Button */}
+                  {canStartNewSession && (
+                    <button
+                      onClick={startNewVotingSession}
+                      className="btn btn-warning"
+                    >
+                      <i className="fas fa-plus-circle me-2"></i>
+                      Start New Session
+                    </button>
+                  )}
+
+                  {/* Add Promote Top Nominees Button - ONLY ONE BUTTON */}
+                  {hasSessionEnded &&
+                    !votingSettings.VotingEnabled &&
+                    topNominees.length > 0 && (
+                      <div className="d-flex align-items-center">
+                        <button onClick={promoteTop3} className="btn btn-info">
+                          <i className="fas fa-trophy me-2"></i>
+                          Promote Top Nominees
+                        </button>
+                        <span
+                          className="ms-2 text-muted"
+                          title="Top nominee (with votes) is required. Next 2 are optional."
+                          style={{ cursor: "help" }}
+                        >
+                          <i className="fas fa-info-circle"></i>
+                        </span>
+                      </div>
+                    )}
                 </div>
               </div>
+
+              {/* Session Status Alerts */}
+              {hasSessionEnded && (
+                <div className="alert alert-warning mt-3">
+                  <i className="fas fa-exclamation-triangle me-2"></i>
+                  <strong>Voting Session Ended</strong>
+                  <div className="mt-2">
+                    {canStartNewSession
+                      ? "The voting session has ended. You can now start a new session."
+                      : "The voting session has ended. Please wait for admin to start a new session."}
+                  </div>
+                </div>
+              )}
+
+              {hasActiveSession && (
+                <div className="alert alert-success mt-3">
+                  <i className="fas fa-check-circle me-2"></i>
+                  <strong>Active Voting Session</strong>
+                  <div className="mt-2">
+                    Current session is active. Nominations and votes will be
+                    recorded for this session only.
+                  </div>
+                </div>
+              )}
 
               {/* Top Nominees Section */}
               {votingSettings.VotingEnabled && (
@@ -791,7 +962,7 @@ export default function VotingSessionPage() {
                         ? votes.some(
                             (vote) =>
                               vote.VoterID === currentUser.UserID &&
-                              vote.NomineeID === nomination.NomineeID
+                              vote.NomineeUserID === nomination.NomineeID
                           )
                         : false;
 
@@ -816,10 +987,10 @@ export default function VotingSessionPage() {
                                 {nominee?.ProfilePhoto ? (
                                   <img
                                     src={
-                        nominee.ProfilePhoto.startsWith("http")
-                          ? nominee.ProfilePhoto
-                          : `data:image/jpeg;base64,${nominee.ProfilePhoto}`
-                      }
+                                      nominee.ProfilePhoto.startsWith("http")
+                                        ? nominee.ProfilePhoto
+                                        : `data:image/jpeg;base64,${nominee.ProfilePhoto}`
+                                    }
                                     alt={nominee.FullName}
                                     className="rounded-circle w-100 h-100 object-cover"
                                   />
@@ -844,6 +1015,7 @@ export default function VotingSessionPage() {
                                 {nomination.VoteCount} votes
                               </p>
 
+                              {/*
                               {!isCurrentUser && currentUser && (
                                 <button
                                   onClick={() =>
@@ -869,8 +1041,9 @@ export default function VotingSessionPage() {
                                       Vote Now
                                     </>
                                   )}
-                                </button>
+                                </button> 
                               )}
+                              */}
                             </div>
                           </div>
                         </div>
@@ -917,10 +1090,10 @@ export default function VotingSessionPage() {
                                   {nominee?.ProfilePhoto ? (
                                     <img
                                       src={
-                        nominee.ProfilePhoto.startsWith("http")
-                          ? nominee.ProfilePhoto
-                          : `data:image/jpeg;base64,${nominee.ProfilePhoto}`
-                      }
+                                        nominee.ProfilePhoto.startsWith("http")
+                                          ? nominee.ProfilePhoto
+                                          : `data:image/jpeg;base64,${nominee.ProfilePhoto}`
+                                      }
                                       alt={nominee.FullName}
                                       className="rounded-circle w-100 h-100 object-cover"
                                     />
@@ -947,12 +1120,13 @@ export default function VotingSessionPage() {
                                 <div className="avatar me-2">
                                   {nominator?.ProfilePhoto ? (
                                     <img
-                                     
                                       src={
-                        nominator.ProfilePhoto.startsWith("http")
-                          ? nominator.ProfilePhoto
-                          : `data:image/jpeg;base64,${nominator.ProfilePhoto}`
-                      }
+                                        nominator.ProfilePhoto.startsWith(
+                                          "http"
+                                        )
+                                          ? nominator.ProfilePhoto
+                                          : `data:image/jpeg;base64,${nominator.ProfilePhoto}`
+                                      }
                                       alt={nominator.FullName}
                                       className="rounded-circle w-100 h-100 object-cover"
                                     />
@@ -1040,7 +1214,7 @@ export default function VotingSessionPage() {
                     <tbody>
                       {votes.map((vote) => {
                         const voter = getUserById(vote.VoterID);
-                        const nominee = getUserById(vote.NomineeID);
+                        const nominee = getUserById(vote.NomineeUserID);
                         return (
                           <tr key={vote.VoteID}>
                             <td>
@@ -1048,7 +1222,11 @@ export default function VotingSessionPage() {
                                 <div className="avatar me-2">
                                   {voter?.ProfilePhoto ? (
                                     <img
-                                      src={voter.ProfilePhoto}
+                                      src={
+                                        voter.ProfilePhoto.startsWith("http")
+                                          ? voter.ProfilePhoto
+                                          : `data:image/jpeg;base64,${voter.ProfilePhoto}`
+                                      }
                                       alt={voter.FullName}
                                       className="rounded-circle w-100 h-100 object-cover"
                                     />
@@ -1076,10 +1254,10 @@ export default function VotingSessionPage() {
                                   {nominee?.ProfilePhoto ? (
                                     <img
                                       src={
-                        nominee.ProfilePhoto.startsWith("http")
-                          ? nominee.ProfilePhoto
-                          : `data:image/jpeg;base64,${nominee.ProfilePhoto}`
-                      }
+                                        nominee.ProfilePhoto.startsWith("http")
+                                          ? nominee.ProfilePhoto
+                                          : `data:image/jpeg;base64,${nominee.ProfilePhoto}`
+                                      }
                                       alt={nominee.FullName}
                                       className="rounded-circle w-100 h-100 object-cover"
                                     />
