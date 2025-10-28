@@ -42,6 +42,7 @@ interface Flag {
 }
 
 type SortOption = "ID" | "Name" | "Responses" | "Flags" | "Misuses";
+type FilterOption = "all" | "hasFlags" | "hasMisuses";
 
 const CommunityMemberManagement = () => {
   const router = useRouter();
@@ -54,6 +55,7 @@ const CommunityMemberManagement = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   
   // Modal states
@@ -66,6 +68,7 @@ const CommunityMemberManagement = () => {
   
   // Table controls
   const [sortBy, setSortBy] = useState<SortOption>("ID");
+  const [filterBy, setFilterBy] = useState<FilterOption>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
@@ -114,25 +117,38 @@ const CommunityMemberManagement = () => {
     }
   };
 
-  // Search functionality
+  // Filter and search functionality
   useEffect(() => {
-    if (searchTerm.trim() === "") {
-      setFilteredMembers(members);
-      setCurrentPage(1);
-      return;
+    let filtered = [...members];
+
+    // Apply filter
+    switch (filterBy) {
+      case "hasFlags":
+        filtered = filtered.filter(member => member.flagCount > 0);
+        break;
+      case "hasMisuses":
+        filtered = filtered.filter(member => member.misuseCount > 0);
+        break;
+      case "all":
+      default:
+        // No filter applied
+        break;
     }
 
-    const lowercasedSearch = searchTerm.toLowerCase();
-    const filtered = members.filter(member => 
-      member.FullName.toLowerCase().includes(lowercasedSearch) ||
-      member.Email.toLowerCase().includes(lowercasedSearch) ||
-      member.UserID.toString().includes(lowercasedSearch) ||
-      member.PhoneNumber?.includes(lowercasedSearch)
-    );
+    // Apply search
+    if (searchTerm.trim() !== "") {
+      const lowercasedSearch = searchTerm.toLowerCase();
+      filtered = filtered.filter(member => 
+        member.FullName.toLowerCase().includes(lowercasedSearch) ||
+        member.Email.toLowerCase().includes(lowercasedSearch) ||
+        member.UserID.toString().includes(lowercasedSearch) ||
+        member.PhoneNumber?.includes(lowercasedSearch)
+      );
+    }
 
     setFilteredMembers(filtered);
     setCurrentPage(1);
-  }, [searchTerm, members]);
+  }, [searchTerm, members, filterBy]);
 
   // Modal handlers
   const handleOpenMisuseModal = async (userId: number) => {
@@ -367,6 +383,54 @@ const CommunityMemberManagement = () => {
               {option}
             </button>
           ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderFilterDropdown = () => (
+    <div className="dropdown">
+      <button
+        className="btn btn-light btn-sm dropdown-toggle"
+        type="button"
+        onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+        style={{ minWidth: '140px' }}
+      >
+        <i className="fas fa-filter me-1"></i>
+        Filter: {filterBy === 'all' ? 'All' : filterBy === 'hasFlags' ? 'Has Flags' : 'Has Misuses'}
+      </button>
+      {isFilterDropdownOpen && (
+        <div className="dropdown-menu show position-absolute">
+          <button
+            className="dropdown-item"
+            onClick={() => {
+              setFilterBy("all");
+              setIsFilterDropdownOpen(false);
+            }}
+          >
+            <i className="fas fa-users me-2"></i>
+            All Members
+          </button>
+          <button
+            className="dropdown-item"
+            onClick={() => {
+              setFilterBy("hasFlags");
+              setIsFilterDropdownOpen(false);
+            }}
+          >
+            <i className="fas fa-flag me-2"></i>
+            Has Flags
+          </button>
+          <button
+            className="dropdown-item"
+            onClick={() => {
+              setFilterBy("hasMisuses");
+              setIsFilterDropdownOpen(false);
+            }}
+          >
+            <i className="fas fa-exclamation-triangle me-2"></i>
+            Has Misuses
+          </button>
         </div>
       )}
     </div>
@@ -627,6 +691,7 @@ const CommunityMemberManagement = () => {
                 {renderStats()}
                 {renderSearchInput()}
                 {renderSortDropdown()}
+                {renderFilterDropdown()}
               </div>
             </div>
           </div>
@@ -652,14 +717,20 @@ const CommunityMemberManagement = () => {
                       <td colSpan={8} className="text-center py-5">
                         <i className="fas fa-users fs-1 text-muted opacity-50"></i>
                         <p className="mt-3 text-muted">
-                          {searchTerm ? "No matching members found" : "No members found"}
+                          {searchTerm || filterBy !== 'all' 
+                            ? "No matching members found" 
+                            : "No members found"
+                          }
                         </p>
-                        {searchTerm && (
+                        {(searchTerm || filterBy !== 'all') && (
                           <button
                             className="btn btn-outline-primary btn-sm"
-                            onClick={() => setSearchTerm('')}
+                            onClick={() => {
+                              setSearchTerm('');
+                              setFilterBy('all');
+                            }}
                           >
-                            Clear search
+                            Clear filters
                           </button>
                         )}
                       </td>
@@ -676,6 +747,11 @@ const CommunityMemberManagement = () => {
             {renderPagination()}
             <div className="text-center mt-3 text-muted small">
               Showing {currentItems.length} of {filteredMembers.length} members • Page {currentPage} of {totalPages}
+              {filterBy !== 'all' && (
+                <span className="ms-2">
+                  • Filtered by: {filterBy === 'hasFlags' ? 'Has Flags' : 'Has Misuses'}
+                </span>
+              )}
             </div>
           </div>
         </div>
