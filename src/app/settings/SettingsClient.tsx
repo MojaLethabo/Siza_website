@@ -742,7 +742,7 @@ export default function SettingsClient() {
                   <div className="col-md-8">
                     <h6 className="text-danger mb-2">Demote from Admin</h6>
                     <p className="text-muted mb-2">
-                      Remove your administrative privileges and become a Volunteer.
+                      Remove your administrative privileges and become a community member.
                     </p>
                     <div className="text-danger small">
                       <i className="fas fa-exclamation-circle me-1"></i>
@@ -756,7 +756,7 @@ export default function SettingsClient() {
                       onClick={() => setShowDemoteModal(true)}
                     >
                       <i className="fas fa-user-minus me-2"></i>
-                      Demote to Volunteer
+                      Demote to a member
                     </button>
                   </div>
                 </div>
@@ -895,7 +895,7 @@ export default function SettingsClient() {
                       <i className="fas fa-info-circle me-2"></i>
                       Important Notice
                     </h6>
-                    <p className="mb-2">You are about to remove your admin privileges and become a Volunteer.</p>
+                    <p className="mb-2">You are about to remove your admin privileges and become a Community member.</p>
                     <ul className="mb-0 ps-3">
                       <li>You will lose access to admin dashboard and features</li>
                       <li>You will no longer be able to manage users or content</li>
@@ -944,7 +944,7 @@ export default function SettingsClient() {
                     ) : (
                       <>
                         <i className="fas fa-user-minus me-2"></i>
-                        Yes, Demote to Volunteer
+                        Yes, Demote to a Member
                       </>
                     )}
                   </button>

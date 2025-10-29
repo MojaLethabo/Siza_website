@@ -10,6 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
+  Legend,
 } from "recharts";
 import { DateTime } from "luxon";
 import Chart from "chart.js/auto";
@@ -25,7 +26,7 @@ const HeatmapComponent = dynamic(
         <div className="spinner-border text-primary" role="status">
           <span className="visually-hidden">Loading heatmap...</span>
         </div>
-        <p className="mt-2">Loading heatmap visualization...</p>
+        <p className="mt-2 text-muted">Loading heatmap visualization...</p>
       </div>
     ),
   }
@@ -82,7 +83,6 @@ interface FireIncident {
   timestamp: Date;
 }
 
-// Add interface for average response time
 interface AverageResponseTime {
   averageResponseTimeMinutes: number;
   totalReports: number;
@@ -109,11 +109,11 @@ interface FireIncidentApiResponse {
 }
 
 const statusColors = {
-  Completed: "#10b981",
-  Escalated: "#f59e0b",
-  "False report": "#ef4444",
-  "On-Going": "#3b82f6",
-  Abandoned: "#9caa1dff",
+  Completed: "#28a745",
+  Escalated: "#ffc107",
+  "False report": "#dc3545",
+  "On-Going": "#17a2b8",
+  Abandoned: "#6c757d",
 } as const;
 
 function isStatusKey(key: string): key is StatusKey {
@@ -138,7 +138,6 @@ export default function CrimeHeatmapPage() {
   const [chartInstance, setChartInstance] = useState<Chart | null>(null);
   const [selectedSuburb, setSelectedSuburb] = useState<string>("");
   const [chartStatus, setChartStatus] = useState<string>("Loading data...");
-  // Add state for average response time
   const [averageResponseTime, setAverageResponseTime] = useState<AverageResponseTime | null>(null);
   const [loadingResponseTime, setLoadingResponseTime] = useState(false);
 
@@ -312,7 +311,6 @@ export default function CrimeHeatmapPage() {
     const ctx = document.getElementById("incidentChart") as HTMLCanvasElement;
     if (!ctx) return;
 
-    // Filter incidents if suburb is selected
     const filteredIncidents = selectedSuburb
       ? fireIncidents.filter((item) => item.suburbName === selectedSuburb)
       : fireIncidents;
@@ -330,7 +328,6 @@ export default function CrimeHeatmapPage() {
       return;
     }
 
-    // Group incidents by hour
     const hourlyCounts = Array(24)
       .fill(0)
       .map((_, i) => ({
@@ -344,7 +341,6 @@ export default function CrimeHeatmapPage() {
       hourlyCounts[incident.hour].suburbs.add(incident.suburbName);
     });
 
-    // Prepare chart data
     const labels = hourlyCounts.map((item) =>
       DateTime.fromObject({ hour: item.hour }).toFormat("h a")
     );
@@ -353,7 +349,6 @@ export default function CrimeHeatmapPage() {
       Array.from(item.suburbs).join(", ")
     );
 
-    // Create or update chart
     if (chartInstance) {
       chartInstance.destroy();
     }
@@ -366,14 +361,15 @@ export default function CrimeHeatmapPage() {
           {
             label: selectedSuburb || "All Suburbs",
             data: dataPoints,
-            backgroundColor: "rgba(220, 53, 69, 0.2)",
-            borderColor: "rgba(220, 53, 69, 1)",
+            backgroundColor: "rgba(102, 126, 234, 0.1)",
+            borderColor: "rgba(102, 126, 234, 1)",
             borderWidth: 3,
-            pointBackgroundColor: "rgba(220, 53, 69, 1)",
-            pointRadius: 4,
-            pointHoverRadius: 6,
+            pointBackgroundColor: "rgba(102, 126, 234, 1)",
+            pointBorderColor: "#fff",
+            pointRadius: 5,
+            pointHoverRadius: 7,
             fill: true,
-            tension: 0.3,
+            tension: 0.4,
           },
         ],
       },
@@ -388,10 +384,16 @@ export default function CrimeHeatmapPage() {
               text: "Number of Incidents",
               font: {
                 weight: "bold",
+                size: 14,
               },
+              color: "#495057",
             },
             ticks: {
               precision: 0,
+              color: "#6c757d",
+            },
+            grid: {
+              color: "rgba(0, 0, 0, 0.05)",
             },
           },
           x: {
@@ -400,12 +402,35 @@ export default function CrimeHeatmapPage() {
               text: "Hour of Day",
               font: {
                 weight: "bold",
+                size: 14,
               },
+              color: "#495057",
+            },
+            ticks: {
+              color: "#6c757d",
+            },
+            grid: {
+              color: "rgba(0, 0, 0, 0.05)",
             },
           },
         },
         plugins: {
+          legend: {
+            labels: {
+              font: {
+                size: 12,
+                weight: "bold",
+              },
+              color: "#495057",
+            },
+          },
           tooltip: {
+            backgroundColor: "rgba(255, 255, 255, 0.95)",
+            titleColor: "#495057",
+            bodyColor: "#495057",
+            borderColor: "rgba(102, 126, 234, 0.3)",
+            borderWidth: 1,
+            boxPadding: 10,
             callbacks: {
               afterLabel: (context) => {
                 if (!selectedSuburb) {
@@ -445,17 +470,17 @@ export default function CrimeHeatmapPage() {
     return icons[type] || "fas fa-chart-bar";
   };
 
-  const getResponseTimeColor = (minutes: number) => {
-    if (minutes <= 5) return "text-success";
-    if (minutes <= 10) return "text-warning";
-    return "text-danger";
-  };
-
   const getResponseTimeStatus = (minutes: number) => {
     if (minutes <= 5) return "Excellent";
     if (minutes <= 10) return "Good";
     if (minutes <= 15) return "Average";
     return "Needs Improvement";
+  };
+
+  const getResponseTimeColor = (minutes: number) => {
+    if (minutes <= 5) return "text-success";
+    if (minutes <= 10) return "text-warning";
+    return "text-danger";
   };
 
   const renderStats = () => {
@@ -464,6 +489,10 @@ export default function CrimeHeatmapPage() {
         <div className="stat-badge">
           <i className="fas fa-file-alt me-1"></i>
           {totalReports.toLocaleString()} Reports
+        </div>
+        <div className="stat-badge">
+          <i className="fas fa-map-marker-alt me-1"></i>
+          {uniqueSuburbCount} Areas
         </div>
         {averageResponseTime && (
           <div className="stat-badge">
@@ -482,7 +511,7 @@ export default function CrimeHeatmapPage() {
         onChange={(e) => setSelectedType(e.target.value)}
         className="form-select"
         disabled={loading}
-        style={{ minWidth: "180px" }}
+        style={{ minWidth: "200px" }}
       >
         {reportTypes.map((type) => (
           <option key={type} value={type}>
@@ -514,7 +543,7 @@ export default function CrimeHeatmapPage() {
   }
 
   return (
-    <div className="container-fluid py-4">
+    <>
       <style jsx>{`
         .stat-badge {
           background: rgba(255, 255, 255, 0.2);
@@ -525,16 +554,52 @@ export default function CrimeHeatmapPage() {
           font-weight: 600;
           color: white;
         }
-
+        
         .card {
           border: none;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-            0 2px 4px -1px rgba(0, 0, 0, 0.06);
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+          border-radius: 12px;
         }
-
+        
         .card-header {
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           border-bottom: none;
+          border-radius: 12px 12px 0 0 !important;
+        }
+
+        .metric-card {
+          background: white;
+          border-radius: 12px;
+          padding: 1.5rem;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+          border: 1px solid #e9ecef;
+          height: 100%;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .metric-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .metric-icon {
+          font-size: 2.5rem;
+          margin-bottom: 1rem;
+          opacity: 0.8;
+        }
+
+        .metric-value {
+          font-size: 2.5rem;
+          font-weight: bold;
+          margin-bottom: 0.5rem;
+          line-height: 1;
+        }
+
+        .metric-label {
+          font-size: 0.9rem;
+          color: #6c757d;
+          font-weight: 500;
+          margin-bottom: 0;
         }
 
         .status-legend {
@@ -560,6 +625,9 @@ export default function CrimeHeatmapPage() {
 
         .chart-container {
           height: 400px;
+          background: white;
+          border-radius: 8px;
+          padding: 1rem;
         }
 
         .affected-areas-list {
@@ -570,6 +638,12 @@ export default function CrimeHeatmapPage() {
         .area-item {
           border-left: 4px solid transparent;
           transition: all 0.2s ease;
+          padding: 1rem;
+          border-bottom: 1px solid #e9ecef;
+        }
+
+        .area-item:last-child {
+          border-bottom: none;
         }
 
         .area-item:hover {
@@ -590,175 +664,99 @@ export default function CrimeHeatmapPage() {
         }
 
         .progress-thin {
-          height: 4px;
+          height: 6px;
+          border-radius: 3px;
         }
 
-        .metric-card {
-          background: rgba(255, 255, 255, 0.95);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          backdrop-filter: blur(10px);
-          height: 100%;
-          min-height: 140px;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-        }
-
-        .response-time-card {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          height: 100%;
-          min-height: 140px;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-        }
-
-        .response-time-value {
-          font-size: 2.2rem;
-          font-weight: bold;
-          margin-bottom: 0.3rem;
-          line-height: 1;
-        }
-
-        .response-time-status {
-          font-size: 1rem;
-          opacity: 0.9;
-          margin-bottom: 0.5rem;
-        }
-
-        .response-time-stats {
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 8px;
-          padding: 8px 12px;
-          margin-top: 8px;
-          font-size: 0.85rem;
-        }
-
-        .metric-icon {
-          font-size: 2.2rem;
-          margin-bottom: 0.5rem;
-        }
-
-        .metric-value {
-          font-size: 2.2rem;
-          font-weight: bold;
-          margin-bottom: 0.3rem;
-          line-height: 1;
-        }
-
-        .metric-label {
-          font-size: 0.9rem;
-          color: #6c757d;
-          margin-bottom: 0;
+        .controls-container {
+          background: white;
+          border-radius: 12px;
+          padding: 1.5rem;
+          margin-bottom: 1.5rem;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+          border: 1px solid #e9ecef;
         }
 
         .form-select {
-          background-color: rgba(255, 255, 255, 0.9);
-          border: 1px solid rgba(255, 255, 255, 0.3);
-          color: #495057;
+          border: 2px solid #e9ecef;
+          border-radius: 8px;
+          padding: 0.75rem;
+          font-weight: 500;
+          transition: all 0.2s ease;
         }
 
         .form-select:focus {
-          background-color: white;
-          border-color: rgba(255, 255, 255, 0.5);
-          box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25);
+          border-color: #667eea;
+          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
-        .dashboard {
-          background-color: white;
-          padding: 25px;
-          border-radius: 10px;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        }
-
-        .controls {
-          display: flex;
-          align-items: center;
-          gap: 15px;
-          margin-bottom: 20px;
-          padding: 15px;
-          background-color: #f1f1f1;
-          border-radius: 8px;
-        }
-
-        .controls label {
-          font-weight: 600;
-          color: #495057;
-        }
-
-        .controls select {
-          padding: 10px 15px;
-          font-size: 15px;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-          min-width: 250px;
-          background-color: white;
-        }
-
-        .status {
-          margin-left: auto;
+        .chart-status {
           font-style: italic;
           color: #6c757d;
+          font-size: 0.9rem;
         }
 
-        .loading {
-          display: inline-block;
-          width: 16px;
-          height: 16px;
-          border: 3px solid rgba(0, 0, 0, 0.1);
-          border-radius: 50%;
-          border-top-color: #dc3545;
-          animation: spin 1s ease-in-out infinite;
-          margin-right: 8px;
+        .response-time-status {
+          font-size: 0.9rem;
+          font-weight: 500;
+          margin-top: 0.25rem;
         }
 
-        @keyframes spin {
-          to {
-            transform: rotate(360deg);
-          }
+        .suburb-selector {
+          min-width: 250px;
         }
 
-        /* Ensure all metric cards have the same height */
-        .metrics-row .col-md-3 {
-          display: flex;
+        .heatmap-container {
+          border-radius: 12px;
+          overflow: hidden;
+          background: white;
         }
 
-        .metrics-row .card {
-          flex: 1;
+        .section-title {
+          color: #1e293b;
+          font-weight: 600;
+          margin-bottom: 1rem;
+          font-size: 1.1rem;
+        }
+
+        .risk-badge {
+          font-size: 0.75rem;
+          padding: 0.25rem 0.5rem;
+          border-radius: 12px;
+          font-weight: 600;
         }
       `}</style>
 
-      {/* Main Header Card */}
-      <div className="card mb-4">
-        <div className="card-header text-white py-4">
-          <div className="d-flex justify-content-between align-items-center">
-            <div>
-              <h3 className="mb-1">
-                <i className={`${getReportIcon(selectedType)} me-2`}></i>
-                {selectedType} Analytics Dashboard
-              </h3>
-              <p className="mb-0 opacity-75">
-                Real-time incident monitoring and analysis
-              </p>
-            </div>
-
-            <div className="d-flex gap-3 align-items-center">
-              {renderStats()}
-              {renderTypeSelector()}
+      <div className="container-fluid py-4">
+        {/* Main Header Card */}
+        <div className="card mb-4">
+          <div className="card-header text-white py-4">
+            <div className="d-flex justify-content-between align-items-center">
+              <div>
+                <h3 className="mb-1">
+                  <i className={`${getReportIcon(selectedType)} me-2`}></i>
+                  {selectedType} Analytics Dashboard
+                </h3>
+                <p className="mb-0 opacity-75">
+                  Real-time incident monitoring and geographic analysis
+                </p>
+              </div>
+              
+              <div className="d-flex gap-3 align-items-center">
+                {renderStats()}
+                {renderTypeSelector()}
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {!loading && heatData.length > 0 ? (
-        <div className="row g-4">
-          {/* Quick Metrics Row */}
-          <div className="col-12">
-            <div className="row g-3 metrics-row">
-              <div className="col-md-4">
-                <div className="card metric-card">
-                  <div className="card-body text-center d-flex flex-column justify-content-center">
+        {!loading && heatData.length > 0 ? (
+          <div className="row g-4">
+            {/* Key Metrics Row */}
+            <div className="col-12">
+              <div className="row g-4">
+                <div className="col-md-3">
+                  <div className="metric-card text-center">
                     <i className="fas fa-file-alt metric-icon text-primary"></i>
                     <div className="metric-value text-primary">
                       {totalReports.toLocaleString()}
@@ -766,297 +764,314 @@ export default function CrimeHeatmapPage() {
                     <p className="metric-label">Total Reports</p>
                   </div>
                 </div>
-              </div>
-             {/*} <div className="col-md-3">
-                <div className="card metric-card">
-                  <div className="card-body text-center d-flex flex-column justify-content-center">
+                
+                <div className="col-md-3">
+                  <div className="metric-card text-center">
                     <i className="fas fa-map-marker-alt metric-icon text-success"></i>
                     <div className="metric-value text-success">
-                      {heatData.length}
+                      {uniqueSuburbCount}
                     </div>
-                    <p className="metric-label">Heat Points</p>
+                    <p className="metric-label">Affected Areas</p>
                   </div>
                 </div>
-              </div>*/}
-              <div className="col-md-4">
-                <div className="card metric-card">
-                  <div className="card-body text-center d-flex flex-column justify-content-center">
+                
+                <div className="col-md-3">
+                  <div className="metric-card text-center">
                     <i className="fas fa-chart-line metric-icon text-warning"></i>
                     <div className="metric-value text-warning">
-                      {uniqueSuburbCount
-                        ? (totalReports / uniqueSuburbCount).toFixed(1)
-                        : "0"}
+                      {uniqueSuburbCount ? (totalReports / uniqueSuburbCount).toFixed(1) : "0"}
                     </div>
-                    <p className="metric-label">Average per Area</p>
+                    <p className="metric-label">Avg per Area</p>
                   </div>
                 </div>
-              </div>
-              {/* Average Response Time Card */}
-     <div className="col-md-4">
-  <div className="card metric-card">
-    <div className="card-body text-center d-flex flex-column justify-content-center">
-      <i className="fas fa-clock metric-icon text-danger"></i>
-      {loadingResponseTime ? (
-        <div className="spinner-border spinner-border-sm mb-2 text-danger" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-      ) : averageResponseTime ? (
-        <>
-          <div className={`metric-value text-danger`}>
-            {averageResponseTime.averageResponseTimeMinutes.toFixed(1)}min
-          </div>
-          <div className="response-time-status text-muted small">
-            {getResponseTimeStatus(averageResponseTime.averageResponseTimeMinutes)}
-          </div>
-        </>
-      ) : (
-        <>
-          <div className="metric-value text-danger">N/A</div>
-          <div className="response-time-status text-muted small">No data</div>
-        </>
-      )}
-      <p className="metric-label">Avg Response Time</p>
-    </div>
-  </div>
-</div>
-            </div>
-          </div>
-
-          {/* Heatmap Section */}
-          <div className="col-12">
-            <div className="card">
-              <div className="card-header text-white py-3">
-                <h4 className="mb-0">
-                  <i className="fas fa-map me-2"></i>
-                  Geographic Distribution Heatmap
-                </h4>
-              </div>
-              <div className="card-body">
-                <HeatmapComponent data={heatData} />
-              </div>
-            </div>
-          </div>
-
-          {/* Status Breakdown Chart */}
-          {statusData.length > 0 && (
-            <div className="col-lg-8">
-              <div className="card">
-                <div className="card-header text-white py-3">
-                  <div className="d-flex justify-content-between align-items-center">
-                    <h4 className="mb-0">
-                      <i className="fas fa-chart-bar me-2"></i>
-                      Report Status Distribution
-                    </h4>
-                    <div className="status-legend">
-                      {Object.entries(statusColors).map(([status, color]) => (
-                        <div key={status} className="legend-item">
-                          <div
-                            className="legend-dot"
-                            style={{ backgroundColor: color }}
-                          ></div>
-                          <span>{status}</span>
+                
+                <div className="col-md-3">
+                  <div className="metric-card text-center">
+                    <i className="fas fa-clock metric-icon text-danger"></i>
+                    {loadingResponseTime ? (
+                      <div className="spinner-border spinner-border-sm text-danger mb-2" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                      </div>
+                    ) : averageResponseTime ? (
+                      <>
+                        <div className={`metric-value ${getResponseTimeColor(averageResponseTime.averageResponseTimeMinutes)}`}>
+                          {averageResponseTime.averageResponseTimeMinutes.toFixed(1)}min
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <div className="card-body">
-                  <div className="chart-container">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={statusData}
-                        margin={{ top: 20, right: 30, left: 20, bottom: 70 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis
-                          dataKey="suburb"
-                          angle={-45}
-                          textAnchor="end"
-                          interval={0}
-                          height={60}
-                          tick={{ fontSize: 12 }}
-                        />
-                        <YAxis allowDecimals={false} />
-                        <Tooltip />
-                        <Bar
-                          dataKey="Completed"
-                          stackId="a"
-                          fill={statusColors["Completed"]}
-                        />
-                        <Bar
-                          dataKey="Escalated"
-                          stackId="a"
-                          fill={statusColors["Escalated"]}
-                        />
-                        <Bar
-                          dataKey="False report"
-                          stackId="a"
-                          fill={statusColors["False report"]}
-                        />
-                        <Bar
-                          dataKey="On-Going"
-                          stackId="a"
-                          fill={statusColors["On-Going"]}
-                        />
-                        <Bar
-                          dataKey="Abandoned"
-                          stackId="a"
-                          fill={statusColors["Abandoned"]}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
+                        <div className={`response-time-status ${getResponseTimeColor(averageResponseTime.averageResponseTimeMinutes)}`}>
+                          {getResponseTimeStatus(averageResponseTime.averageResponseTimeMinutes)}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="metric-value text-muted">N/A</div>
+                        <div className="response-time-status text-muted">No data</div>
+                      </>
+                    )}
+                    <p className="metric-label">Avg Response Time</p>
                   </div>
                 </div>
               </div>
             </div>
-          )}
 
-          {/* Affected Areas List */}
-          {suburbCounts.length > 0 && (
-            <div className="col-lg-4">
+            {/* Heatmap Section */}
+            <div className="col-12">
               <div className="card">
                 <div className="card-header text-white py-3">
                   <h4 className="mb-0">
-                    <i className="fas fa-map-marked-alt me-2"></i>
-                    Most Affected Areas
+                    <i className="fas fa-map me-2"></i>
+                    Geographic Distribution Heatmap
                   </h4>
                 </div>
                 <div className="card-body p-0">
-                  <div className="affected-areas-list">
-                    {suburbCounts.map((item, index) => {
-                      let riskClass = "low-risk";
-                      let riskIcon = "fas fa-check-circle text-success";
-
-                      if (item.percentage >= 10) {
-                        riskClass = "high-risk";
-                        riskIcon = "fas fa-exclamation-triangle text-danger";
-                      } else if (item.percentage >= 5) {
-                        riskClass = "medium-risk";
-                        riskIcon = "fas fa-exclamation-circle text-warning";
-                      }
-
-                      return (
-                        <div
-                          key={item.suburb}
-                          className={`area-item p-3 border-bottom ${riskClass}`}
-                        >
-                          <div className="d-flex justify-content-between align-items-start">
-                            <div className="flex-grow-1">
-                              <div className="d-flex align-items-center mb-2">
-                                <span className="badge bg-secondary me-2">
-                                  #{index + 1}
-                                </span>
-                                <h6 className="mb-0 fw-semibold">
-                                  {item.suburb}
-                                </h6>
-                                <i className={`${riskIcon} ms-2`}></i>
-                              </div>
-
-                              <div className="d-flex justify-content-between align-items-center mb-2">
-                                <span className="text-muted small">
-                                  {item.count} reports
-                                </span>
-                                <span className="fw-bold text-primary">
-                                  {item.percentage.toFixed(1)}%
-                                </span>
-                              </div>
-
-                              <div className="progress progress-thin">
-                                <div
-                                  className={`progress-bar ${
-                                    item.percentage >= 10
-                                      ? "bg-danger"
-                                      : item.percentage >= 5
-                                      ? "bg-warning"
-                                      : "bg-success"
-                                  }`}
-                                  role="progressbar"
-                                  style={{
-                                    width: `${Math.min(
-                                      item.percentage * 2,
-                                      100
-                                    )}%`,
-                                  }}
-                                ></div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                  <div className="heatmap-container">
+                    <HeatmapComponent data={heatData} />
                   </div>
-                </div>
-                <div className="card-footer bg-light text-center py-2">
-                  <small className="text-muted">
-                    Showing {suburbCounts.length} affected areas
-                  </small>
                 </div>
               </div>
             </div>
-          )}
 
-          {/* Hourly Fire Incidents */}
-          {selectedType === "Crime" && (
+            {/* Charts and Lists Row */}
             <div className="col-12">
-              <div className="card mt-4">
-                <div className="card-header text-white py-3">
-                  <h4 className="mb-0">
-                    <i className="fas fa-clock me-2"></i>
-                    Hourly Crime Incidents
-                  </h4>
-                </div>
-                <div className="card-body">
-                  <div className="dashboard">
-                    <div className="controls">
-                      <label htmlFor="suburbSelect">Suburb:</label>
-                      <select
-                        id="suburbSelect"
-                        value={selectedSuburb}
-                        onChange={(e) => setSelectedSuburb(e.target.value)}
-                        className="form-select"
-                        disabled={loading || fireIncidents.length === 0}
-                      >
-                        {suburbOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                      <div className="status">
-                        {loading ? (
-                          <>
-                            <span className="loading"></span> Loading data...
-                          </>
-                        ) : (
-                          chartStatus
-                        )}
+              <div className="row g-4">
+                {/* Status Breakdown Chart */}
+                {statusData.length > 0 && (
+                  <div className="col-lg-8">
+                    <div className="card">
+                      <div className="card-header text-white py-3">
+                        <div className="d-flex justify-content-between align-items-center">
+                          <h4 className="mb-0">
+                            <i className="fas fa-chart-bar me-2"></i>
+                            Report Status Distribution by Area
+                          </h4>
+                          <div className="status-legend">
+                            {Object.entries(statusColors).map(([status, color]) => (
+                              <div key={status} className="legend-item">
+                                <div
+                                  className="legend-dot"
+                                  style={{ backgroundColor: color }}
+                                ></div>
+                                <span>{status}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="card-body">
+                        <div className="chart-container">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart
+                              data={statusData}
+                              margin={{ top: 20, right: 30, left: 20, bottom: 100 }}
+                            >
+                              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                              <XAxis
+                                dataKey="suburb"
+                                angle={-45}
+                                textAnchor="end"
+                                interval={0}
+                                height={60}
+                                tick={{ fontSize: 12 }}
+                                tickMargin={10}
+                              />
+                              <YAxis allowDecimals={false} />
+                              <Tooltip 
+                                contentStyle={{ 
+                                  borderRadius: '8px',
+                                  border: '1px solid #e9ecef',
+                                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                                }}
+                              />
+                              
+                              <Bar
+                                dataKey="Completed"
+                                stackId="a"
+                                fill={statusColors["Completed"]}
+                                name="Completed"
+                              />
+                              <Bar
+                                dataKey="On-Going"
+                                stackId="a"
+                                fill={statusColors["On-Going"]}
+                                name="On-Going"
+                              />
+                              <Bar
+                                dataKey="Escalated"
+                                stackId="a"
+                                fill={statusColors["Escalated"]}
+                                name="Escalated"
+                              />
+                              <Bar
+                                dataKey="False report"
+                                stackId="a"
+                                fill={statusColors["False report"]}
+                                name="False Report"
+                              />
+                              <Bar
+                                dataKey="Abandoned"
+                                stackId="a"
+                                fill={statusColors["Abandoned"]}
+                                name="Abandoned"
+                              />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Affected Areas List */}
+                {suburbCounts.length > 0 && (
+                  <div className="col-lg-4">
+                    <div className="card">
+                      <div className="card-header text-white py-3">
+                        <h4 className="mb-0">
+                          <i className="fas fa-map-marked-alt me-2"></i>
+                          Most Affected Areas
+                        </h4>
+                      </div>
+                      <div className="card-body p-0">
+                        <div className="affected-areas-list">
+                          {suburbCounts.slice(0, 10).map((item, index) => {
+                            let riskClass = "low-risk";
+                            let riskColor = "success";
+                            let riskIcon = "fas fa-check-circle";
+
+                            if (item.percentage >= 10) {
+                              riskClass = "high-risk";
+                              riskColor = "danger";
+                              riskIcon = "fas fa-exclamation-triangle";
+                            } else if (item.percentage >= 5) {
+                              riskClass = "medium-risk";
+                              riskColor = "warning";
+                              riskIcon = "fas fa-exclamation-circle";
+                            }
+
+                            return (
+                              <div
+                                key={item.suburb}
+                                className={`area-item ${riskClass}`}
+                              >
+                                <div className="d-flex justify-content-between align-items-start mb-2">
+                                  <div className="d-flex align-items-center">
+                                    <span className="badge bg-secondary me-2">
+                                      #{index + 1}
+                                    </span>
+                                    <h6 className="mb-0 fw-semibold text-dark">
+                                      {item.suburb}
+                                    </h6>
+                                  </div>
+                                  <span className={`badge bg-${riskColor} risk-badge`}>
+                                    <i className={`${riskIcon} me-1`}></i>
+                                    {item.percentage.toFixed(1)}%
+                                  </span>
+                                </div>
+
+                                <div className="d-flex justify-content-between align-items-center mb-2">
+                                  <span className="text-muted small">
+                                    {item.count} reports
+                                  </span>
+                                  <span className="fw-bold text-primary">
+                                    {item.percentage.toFixed(1)}%
+                                  </span>
+                                </div>
+
+                                <div className="progress progress-thin">
+                                  <div
+                                    className={`progress-bar bg-${riskColor}`}
+                                    role="progressbar"
+                                    style={{
+                                      width: `${Math.min(item.percentage * 3, 100)}%`,
+                                    }}
+                                  ></div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <div className="card-footer bg-light text-center py-2">
+                        <small className="text-muted">
+                          Showing top 10 of {suburbCounts.length} affected areas
+                        </small>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Hourly Crime Incidents Chart */}
+            {selectedType === "Crime" && (
+              <div className="col-12">
+                <div className="card">
+                  <div className="card-header text-white py-3">
+                    <h4 className="mb-0">
+                      <i className="fas fa-chart-line me-2"></i>
+                      Hourly Crime Incidents Pattern
+                    </h4>
+                  </div>
+                  <div className="card-body">
+                    <div className="controls-container">
+                      <div className="row align-items-center">
+                        <div className="col-md-6">
+                          <label htmlFor="suburbSelect" className="form-label fw-semibold">
+                            <i className="fas fa-filter me-2"></i>
+                            Filter by Suburb:
+                          </label>
+                          <select
+                            id="suburbSelect"
+                            value={selectedSuburb}
+                            onChange={(e) => setSelectedSuburb(e.target.value)}
+                            className="form-select suburb-selector"
+                            disabled={loading || fireIncidents.length === 0}
+                          >
+                            {suburbOptions.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="col-md-6">
+                          <div className="chart-status text-end">
+                            {loading ? (
+                              <>
+                                <div className="spinner-border spinner-border-sm text-primary me-2" role="status">
+                                  <span className="visually-hidden">Loading...</span>
+                                </div>
+                                Loading data...
+                              </>
+                            ) : (
+                              chartStatus
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
 
-                    <div id="chartContainer" style={{ height: "500px" }}>
+                    <div className="chart-container mt-3">
                       <canvas id="incidentChart"></canvas>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
-      ) : (
-        !loading && (
-          <div className="col-12">
+            )}
+          </div>
+        ) : (
+          !loading && (
             <div className="card">
               <div className="card-body text-center py-5">
-                <i className="fas fa-chart-bar fs-1 text-muted opacity-50"></i>
-                <h4 className="mt-3 text-muted">No Data Available</h4>
-                <p className="text-muted">
-                  No reports found for the selected type: {selectedType}
+                <i className="fas fa-chart-bar fs-1 text-muted opacity-50 mb-3"></i>
+                <h4 className="text-muted mb-2">No Data Available</h4>
+                <p className="text-muted mb-0">
+                  No reports found for {selectedType}. Try selecting a different emergency type.
                 </p>
               </div>
             </div>
-          </div>
-        )
-      )}
-    </div>
+          )
+        )}
+      </div>
+    </>
   );
 }
